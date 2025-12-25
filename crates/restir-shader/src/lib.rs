@@ -11,4 +11,3 @@ extern crate core;
 extern crate std;
 
 pub mod triangle;
-pub mod color;

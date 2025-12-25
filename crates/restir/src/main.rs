@@ -3,7 +3,7 @@ use ash::vk::{
 	PipelineColorBlendStateCreateInfo, PolygonMode, PrimitiveTopology,
 };
 use glam::{Vec2, Vec4};
-use restir_shader::color::ColorEnum;
+use restir::debugger;
 use restir_shader::triangle::{Param, Vertex};
 use rust_gpu_bindless_core::descriptor::{
 	Bindless, BindlessAllocationScheme, BindlessBufferCreateInfo, BindlessBufferUsage, BindlessImageUsage,
@@ -31,7 +31,6 @@ use std::time::Instant;
 use winit::event::{Event, WindowEvent};
 use winit::raw_window_handle::HasDisplayHandle;
 use winit::window::WindowAttributes;
-use restir::debugger;
 
 pub fn main() {
 	event_loop_init(|event_loop, events| async {
@@ -184,7 +183,7 @@ impl<P: BindlessPipelinePlatform> TriangleRenderer<P> {
 				self.rt_format.to_render_pass_format(),
 				&[RenderingAttachment {
 					image: &mut rt,
-					load_op: LoadOp::Clear(ClearValue::ColorF(ColorEnum::Black.color().to_array())),
+					load_op: LoadOp::Clear(ClearValue::ColorF([0.; 4])),
 					store_op: StoreOp::Store,
 				}],
 				None,
