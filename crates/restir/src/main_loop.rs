@@ -1,9 +1,9 @@
+use crate::debugger;
 use ash::vk::{
 	ColorComponentFlags, CullModeFlags, FrontFace, PipelineColorBlendAttachmentState,
 	PipelineColorBlendStateCreateInfo, PolygonMode, PrimitiveTopology,
 };
 use glam::{Vec2, Vec4};
-use restir::debugger;
 use restir_shader::triangle::{Param, Vertex};
 use rust_gpu_bindless_core::descriptor::{
 	Bindless, BindlessAllocationScheme, BindlessBufferCreateInfo, BindlessBufferUsage, BindlessImageUsage,
@@ -143,8 +143,8 @@ impl<P: BindlessPipelinePlatform> TriangleRenderer<P> {
 					PipelineColorBlendAttachmentState::default().color_write_mask(ColorComponentFlags::RGBA),
 				]),
 			},
-			restir::shader::triangle::triangle_vertex::new(),
-			restir::shader::triangle::triangle_fragment::new(),
+			crate::shader::triangle::triangle_vertex::new(),
+			crate::shader::triangle::triangle_fragment::new(),
 		)?;
 
 		Ok(Self {

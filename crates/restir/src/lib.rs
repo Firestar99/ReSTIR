@@ -1,5 +1,6 @@
 use rust_gpu_bindless_core::platform::ash::Debuggers;
 
+pub mod main_loop;
 pub mod shader;
 
 /// the global setting on which debugger to use for integration tests
