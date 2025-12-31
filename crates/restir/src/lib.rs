@@ -1,4 +1,4 @@
-use rust_gpu_bindless_core::platform::ash::Debuggers;
+use rust_gpu_bindless::platform::ash::Debuggers;
 
 pub mod main_loop;
 pub mod shader;
