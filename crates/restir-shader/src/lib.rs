@@ -4,12 +4,6 @@
 // otherwise you won't see any warnings
 #![deny(warnings)]
 
-#[cfg(not(target_arch = "spirv"))]
-extern crate alloc;
-extern crate core;
-#[cfg(not(target_arch = "spirv"))]
-extern crate std;
-
 pub mod camera;
-pub mod triangle;
 pub mod utils;
+pub mod visibility;

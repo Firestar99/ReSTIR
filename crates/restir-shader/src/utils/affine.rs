@@ -45,8 +45,8 @@ impl AffineTranspose for Affine3A {
 #[cfg(test)]
 mod tests {
 	use crate::utils::affine::AffineTranspose;
+	use core::f32::consts::PI;
 	use glam::{Affine3A, Quat, Vec3, Vec3A};
-	use std::f32::consts::PI;
 
 	#[test]
 	fn test_transpose() {

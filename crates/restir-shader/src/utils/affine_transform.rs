@@ -3,7 +3,7 @@ use rust_gpu_bindless_macros::{BufferStructPlain, assert_transfer_size};
 
 /// Affine transformation like [`Affine3A`] but also stores a matrix to transform normals.
 #[repr(C)]
-#[derive(Copy, Clone, Default, Debug, BufferStructPlain)]
+#[derive(Copy, Clone, Debug, BufferStructPlain)]
 pub struct AffineTransform {
 	pub affine: Affine3A,
 	pub normal: Mat3A,
@@ -20,5 +20,14 @@ impl AffineTransform {
 
 	pub fn translation(&self) -> Vec3 {
 		Vec3::from(self.affine.translation)
+	}
+}
+
+impl Default for AffineTransform {
+	fn default() -> Self {
+		Self {
+			affine: Affine3A::IDENTITY,
+			normal: Mat3A::IDENTITY,
+		}
 	}
 }

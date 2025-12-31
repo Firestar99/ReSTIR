@@ -14,19 +14,20 @@ workspace = true
 # members
 rust-gpu-bindless = { workspace = true, features = ["ash"] }
 rust-gpu-bindless-winit = { workspace = true, features = ["ash"] }
-restir-shader = { workspace = true }
+restir-shader.workspace = true
 
 # vulkan
-winit = { workspace = true }
-ash = { workspace = true }
+winit.workspace = true
+ash.workspace = true
 
 # bytes and numbers
-glam = { workspace = true }
+glam.workspace = true
 
 # other
-smallvec = { workspace = true }
-anyhow = { workspace = true }
+smallvec.workspace = true
+anyhow.workspace = true
+profiling.workspace = true
 
 [build-dependencies]
-anyhow = { workspace = true }
-rust-gpu-bindless-shader-builder = { workspace = true }
+anyhow.workspace = true
+rust-gpu-bindless-shader-builder.workspace = true

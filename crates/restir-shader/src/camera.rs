@@ -4,8 +4,7 @@ use bytemuck_derive::AnyBitPattern;
 use glam::{Mat4, UVec2, Vec2, Vec3, Vec4, Vec4Swizzles, vec4};
 use rust_gpu_bindless_macros::BufferStruct;
 
-#[derive(Copy, Clone, BufferStruct)]
-#[cfg_attr(not(target_arch = "spirv"), derive(Debug))]
+#[derive(Copy, Clone, Debug, BufferStruct)]
 #[repr(C)]
 pub struct Camera {
 	pub clip_from_view: Mat4,
@@ -16,8 +15,7 @@ pub struct Camera {
 	pub z_near: f32,
 }
 
-#[derive(Copy, Clone, AnyBitPattern)]
-#[cfg_attr(not(target_arch = "spirv"), derive(Debug))]
+#[derive(Copy, Clone, Debug, AnyBitPattern)]
 #[repr(C)]
 pub struct TransformedPosition {
 	pub world_space: Vec3,
@@ -25,8 +23,7 @@ pub struct TransformedPosition {
 	pub clip_space: Vec4,
 }
 
-#[derive(Copy, Clone, AnyBitPattern)]
-#[cfg_attr(not(target_arch = "spirv"), derive(Debug))]
+#[derive(Copy, Clone, Debug, AnyBitPattern)]
 #[repr(C)]
 pub struct TransformedNormal {
 	pub world_space: Vec3,
