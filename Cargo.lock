@@ -2040,6 +2040,7 @@ dependencies = [
  "bytemuck",
  "bytemuck_derive",
  "glam",
+ "num_enum",
  "rust-gpu-bindless-macros",
  "rust-gpu-bindless-shaders",
  "spirv-std",

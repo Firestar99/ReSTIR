@@ -1,16 +1,54 @@
 use crate::visibility::id::PackedGeometryId;
 use crate::visibility::scene::Scene;
 use glam::{UVec2, UVec3, UVec4, Vec3, Vec3Swizzles, Vec4};
+use num_enum::{FromPrimitive, IntoPrimitive};
 use rust_gpu_bindless_macros::{BufferStruct, bindless};
+use rust_gpu_bindless_shaders::buffer_content::BufferStructPlain;
 use rust_gpu_bindless_shaders::descriptor::{Buffer, Descriptors, Image, Image2d, Image2dU, MutImage, TransientDesc};
 use static_assertions::const_assert_eq;
 
+#[repr(u32)]
+#[derive(Copy, Clone, Debug, Default, Eq, PartialEq, Ord, PartialOrd, FromPrimitive, IntoPrimitive)]
+pub enum DebugType {
+	None,
+	#[default]
+	ColorfulIds,
+	InstanceId,
+	TriangleId,
+}
+
+impl DebugType {
+	pub const MAX_VALUE: DebugType = DebugType::TriangleId;
+	pub const LEN: u32 = Self::MAX_VALUE as u32 + 1;
+}
+
+unsafe impl BufferStructPlain for DebugType {
+	type Transfer = u32;
+
+	unsafe fn write(self) -> Self::Transfer {
+		<u32 as From<Self>>::from(self)
+	}
+
+	unsafe fn read(from: Self::Transfer) -> Self {
+		<Self as num_enum::FromPrimitive>::from_primitive(from)
+	}
+}
+
+#[repr(C)]
+#[derive(Copy, Clone, Debug, Default, BufferStruct)]
+pub struct DebugSettings {
+	pub debug_type: DebugType,
+	pub debug_mix: f32,
+}
+
+#[repr(C)]
 #[derive(Copy, Clone, BufferStruct)]
 pub struct Param<'a> {
 	pub scene: TransientDesc<'a, Buffer<Scene>>,
 	pub packed_vertex_image: TransientDesc<'a, Image<Image2dU>>,
 	pub output_image: TransientDesc<'a, MutImage<Image2d>>,
 	pub instance_max: u32,
+	pub debug_settings: DebugSettings,
 }
 
 pub const DEBUG_VISI_WG_SIZE: UVec2 = UVec2::new(8, 8);
@@ -36,11 +74,20 @@ pub fn debug_visi_comp(
 		let packed_geo = PackedGeometryId::from_u32(packed_geo.x);
 
 		let out_color = if packed_geo.is_clear() {
-			Vec4::new(0., 0.1, 0., 0.)
+			Vec4::ZERO
 		} else {
 			let geo = packed_geo.unpack();
-			let out_color = geo.instance_id.to_u32() as f32 / param.instance_max as f32;
-			Vec4::from((out_color, Vec3::ZERO))
+			let instance_id_color = || (geo.instance_id.to_u32() + 1) as f32 / (param.instance_max + 1) as f32;
+			let triangle_id_color = || {
+				let modulo = 12;
+				(geo.triangle_id.to_u32() % modulo) as f32 / modulo as f32
+			};
+			match param.debug_settings.debug_type {
+				DebugType::None => Vec4::ZERO,
+				DebugType::ColorfulIds => Vec4::new(instance_id_color(), triangle_id_color(), 0., 0.),
+				DebugType::InstanceId => Vec4::from((instance_id_color(), Vec3::ZERO)),
+				DebugType::TriangleId => Vec4::from((triangle_id_color(), Vec3::ZERO)),
+			}
 		};
 		unsafe {
 			param.output_image.access(&descriptors).write(pixel, out_color);

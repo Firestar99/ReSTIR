@@ -3,6 +3,7 @@ use crate::visibility::raster::VisiRasterPipeline;
 use crate::visibility::scene::CpuScene;
 use anyhow::anyhow;
 use glam::UVec4;
+use restir_shader::visibility::debug::DebugSettings;
 use rust_gpu_bindless::descriptor::{
 	Bindless, BindlessAllocationScheme, BindlessImageCreateInfo, BindlessImageUsage, Extent, Format, Image2d, Image2dU,
 	ImageDescExt, MutDesc, MutImage, RCDescExt,
@@ -104,6 +105,11 @@ impl VisiRendererResources {
 	}
 }
 
+pub struct VisiRenderInfo {
+	pub scene: CpuScene,
+	pub debug_settings: DebugSettings,
+}
+
 impl VisiRenderer {
 	pub fn new(pipeline: Arc<VisiPipelines>) -> Self {
 		Self {
@@ -115,8 +121,8 @@ impl VisiRenderer {
 	pub fn render(
 		&mut self,
 		cmd: &mut Recording<'_>,
-		scene: CpuScene,
 		output_image: &MutImageAccess<'_, Image2d, StorageReadWrite>,
+		info: VisiRenderInfo,
 	) -> anyhow::Result<()> {
 		self.image_supported(output_image)?;
 		let resources = {
@@ -160,8 +166,8 @@ impl VisiRenderer {
 				store_op: StoreOp::DontCare,
 			}),
 			|mut rp| {
-				let scene_buffer = scene.scene.to_transient(rp);
-				for draw in &scene.draws {
+				let scene_buffer = info.scene.scene.to_transient(rp);
+				for draw in &info.scene.draws {
 					self.pipeline.raster_pipeline.draw(&mut rp, scene_buffer, draw)?;
 				}
 				Ok(())
@@ -171,7 +177,8 @@ impl VisiRenderer {
 		let packed_vertex_image = packed_vertex_image.transition::<SampledRead>()?;
 		self.pipeline.debug_pipeline.dispatch(
 			cmd,
-			scene,
+			info.scene,
+			info.debug_settings,
 			packed_vertex_image.to_transient_sampled()?,
 			output_image.to_mut_transient(),
 		)?;

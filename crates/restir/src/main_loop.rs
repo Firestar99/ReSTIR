@@ -2,11 +2,12 @@ use crate::controls::app_focus::AppFocus;
 use crate::controls::delta_time::DeltaTimer;
 use crate::controls::fps_camera_controller::FpsCameraController;
 use crate::controls::fps_ui::FpsUi;
+use crate::controls::visi_debug_selector::VisiDebugSettings;
 use crate::debugger;
 use crate::model::CpuModel;
-use crate::visibility::renderer::{VisiPipelines, VisiPipelinesFormat};
+use crate::visibility::renderer::{VisiPipelines, VisiPipelinesFormat, VisiRenderInfo};
 use crate::visibility::scene::CpuSceneAccum;
-use egui::Context;
+use egui::{Context, Pos2};
 use glam::{Affine3A, UVec3, Vec3, Vec3Swizzles};
 use restir_shader::camera::Camera;
 use restir_shader::utils::affine_transform::AffineTransform;
@@ -25,6 +26,7 @@ use rust_gpu_bindless_winit::window_ref::WindowRef;
 use std::f32::consts::PI;
 use std::sync::Arc;
 use std::sync::mpsc::Receiver;
+use winit::dpi::PhysicalSize;
 use winit::event::{Event, WindowEvent};
 use winit::raw_window_handle::HasDisplayHandle;
 use winit::window::WindowAttributes;
@@ -46,7 +48,11 @@ pub async fn main_loop(event_loop: EventLoopExecutor, events: Receiver<Event<()>
 
 	let (window, window_extensions) = event_loop
 		.spawn(|e| {
-			let window = e.create_window(WindowAttributes::default().with_title("swapchain triangle"))?;
+			let window = e.create_window(
+				WindowAttributes::default()
+					.with_title("ReSTIR")
+					.with_inner_size(PhysicalSize::new(1920, 1080)),
+			)?;
 			let extensions = ash_enumerate_required_extensions(e.display_handle()?.as_raw())?;
 			Ok::<_, anyhow::Error>((WindowRef::new(Arc::new(window)), extensions))
 		})
@@ -98,13 +104,14 @@ pub async fn main_loop(event_loop: EventLoopExecutor, events: Receiver<Event<()>
 	let mut app_focus = AppFocus::new(event_loop.clone(), window);
 	let mut camera_controls = FpsCameraController::default();
 	let mut fps_ui = FpsUi::new();
+	let mut visi_debug_settings = VisiDebugSettings::new();
 
 	'outer: loop {
 		{
 			profiling::scope!("event handling");
 			for event in events.try_iter() {
 				swapchain.handle_input(&event);
-				if !app_focus.handle_input(&event) {
+				if !app_focus.handle_input(&event) && !egui_ctx.on_event(&event).is_some_and(|e| e.consumed) {
 					camera_controls.handle_input(&event, app_focus.game_focused);
 				}
 
@@ -123,7 +130,7 @@ pub async fn main_loop(event_loop: EventLoopExecutor, events: Receiver<Event<()>
 			swapchain.acquire_image(None).await?
 		};
 
-		let scene;
+		let render_info;
 		{
 			profiling::scope!("update");
 			let delta_time = delta_timer.next();
@@ -152,12 +159,23 @@ pub async fn main_loop(event_loop: EventLoopExecutor, events: Receiver<Event<()>
 			add_model_at(&model_cube, Vec3::new(4., 0., -2.));
 			add_model_at(&model_cube, Vec3::new(0., 3., -3.));
 			add_model_at(&model_cube, Vec3::new(-4., 0., -4.));
-			scene = accum.finish(&bindless, camera)?;
+			let scene = accum.finish(&bindless, camera)?;
+
+			render_info = VisiRenderInfo {
+				scene,
+				debug_settings: visi_debug_settings.get(),
+			}
 		}
 
 		let egui_output = {
 			profiling::scope!("update egui");
 			egui_ctx.run(|ctx| {
+				egui::Window::new("ReSTIR")
+					.fixed_pos(Pos2::new(0., 0.))
+					.hscroll(true)
+					.show(ctx, |ui| {
+						visi_debug_settings.ui(ui);
+					});
 				fps_ui.ui(ctx);
 			})?
 		};
@@ -166,7 +184,7 @@ pub async fn main_loop(event_loop: EventLoopExecutor, events: Receiver<Event<()>
 			profiling::scope!("render");
 			bindless.execute(|mut cmd| {
 				let output_image = swapchain_image.access_dont_care::<StorageReadWrite>(&cmd)?;
-				visi_renderer.render(&mut cmd, scene, &output_image).unwrap();
+				visi_renderer.render(&mut cmd, &output_image, render_info).unwrap();
 				let mut output_image = output_image.transition::<ColorAttachment>()?;
 				egui_output
 					.draw(

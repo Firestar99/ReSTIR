@@ -24,3 +24,4 @@ bytemuck_derive.workspace = true
 
 # other
 static_assertions.workspace = true
+num_enum.workspace = true
