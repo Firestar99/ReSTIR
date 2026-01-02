@@ -87,8 +87,8 @@ pub async fn main_loop(event_loop: EventLoopExecutor, events: Receiver<Event<()>
 			profiling::scope!("event handling");
 			for event in events.try_iter() {
 				swapchain.handle_input(&event);
-				if app_focus.handle_input(&event) {
-					camera_controls.handle_input(&event, true);
+				if !app_focus.handle_input(&event) {
+					camera_controls.handle_input(&event, app_focus.game_focused);
 				}
 
 				if let Event::WindowEvent {
