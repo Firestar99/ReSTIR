@@ -1,6 +1,6 @@
 use crate::visibility::renderer::VisiPipelinesFormat;
 use crate::visibility::scene::CpuDraw;
-use ash::vk::{CompareOp, PipelineColorBlendAttachmentState, PrimitiveTopology};
+use ash::vk::{ColorComponentFlags, CompareOp, PipelineColorBlendAttachmentState, PrimitiveTopology};
 use restir_shader::visibility::raster::Param;
 use restir_shader::visibility::scene::Scene;
 use rust_gpu_bindless::descriptor::{Bindless, Buffer, DescBufferLenExt, RCDescExt, TransientDesc};
@@ -26,9 +26,10 @@ impl VisiRasterPipeline {
 					depth_stencil_state: PipelineDepthStencilStateCreateInfo::default()
 						.depth_test_enable(true)
 						.depth_write_enable(true)
-						.depth_compare_op(CompareOp::GREATER),
-					color_blend_state: PipelineColorBlendStateCreateInfo::default()
-						.attachments(&[PipelineColorBlendAttachmentState::default()]),
+						.depth_compare_op(CompareOp::LESS),
+					color_blend_state: PipelineColorBlendStateCreateInfo::default().attachments(&[
+						PipelineColorBlendAttachmentState::default().color_write_mask(ColorComponentFlags::RGBA),
+					]),
 				},
 				crate::shader::visibility::raster::visibility_vert::new(),
 				crate::shader::visibility::raster::visibility_frag::new(),

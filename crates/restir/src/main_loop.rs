@@ -4,7 +4,7 @@ use crate::controls::fps_camera_controller::FpsCameraController;
 use crate::debugger;
 use crate::visibility::renderer::{VisiPipelines, VisiPipelinesFormat};
 use crate::visibility::scene::CpuSceneAccum;
-use glam::{Affine3A, UVec3, Vec3Swizzles};
+use glam::{Affine3A, UVec3, Vec3, Vec3Swizzles};
 use restir_shader::camera::Camera;
 use restir_shader::utils::affine_transform::AffineTransform;
 use restir_shader::visibility::scene::InstanceInfo;
@@ -125,7 +125,7 @@ pub async fn main_loop(event_loop: EventLoopExecutor, events: Receiver<Event<()>
 			accum.push(
 				&model,
 				InstanceInfo {
-					world_from_local: Default::default(),
+					world_from_local: AffineTransform::new(Affine3A::from_translation(Vec3::new(0., 0., -2.))),
 				},
 			);
 			scene = accum.finish(&bindless, camera)?;

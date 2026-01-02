@@ -153,7 +153,7 @@ impl VisiRenderer {
 			Some(RenderingAttachment {
 				image: RenderingAttachmentImage::DepthStencil {
 					image: &mut depth,
-					clear_depth: 0.0,
+					clear_depth: 1.0,
 					clear_stencil: 0,
 				},
 				load_op: LoadOp::Clear,
