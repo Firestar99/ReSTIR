@@ -2,6 +2,7 @@ use crate::controls::app_focus::AppFocus;
 use crate::controls::delta_time::DeltaTimer;
 use crate::controls::fps_camera_controller::FpsCameraController;
 use crate::debugger;
+use crate::visibility::model::CpuModel;
 use crate::visibility::renderer::{VisiPipelines, VisiPipelinesFormat};
 use crate::visibility::scene::CpuSceneAccum;
 use glam::{Affine3A, UVec3, Vec3, Vec3Swizzles};
@@ -76,7 +77,7 @@ pub async fn main_loop(event_loop: EventLoopExecutor, events: Receiver<Event<()>
 	let visi_pipelines = VisiPipelines::new(&bindless, visi_format)?;
 	let mut visi_renderer = visi_pipelines.new_renderer();
 
-	let model = crate::visibility::debug_models::cube(&bindless, Affine3A::default())?;
+	let model_cube = crate::visibility::debug_models::cube(&bindless, Affine3A::default())?;
 
 	let mut delta_timer = DeltaTimer::new();
 	let mut app_focus = AppFocus::new(event_loop.clone(), window);
@@ -122,12 +123,18 @@ pub async fn main_loop(event_loop: EventLoopExecutor, events: Receiver<Event<()>
 			);
 
 			let mut accum = CpuSceneAccum::new();
-			accum.push(
-				&model,
-				InstanceInfo {
-					world_from_local: AffineTransform::new(Affine3A::from_translation(Vec3::new(0., 0., -2.))),
-				},
-			);
+			let mut add_model_at = |model: &CpuModel, at: Vec3| {
+				accum.push(
+					&model,
+					InstanceInfo {
+						world_from_local: AffineTransform::new(Affine3A::from_translation(at)),
+					},
+				);
+			};
+			add_model_at(&model_cube, Vec3::new(0., 0., -6.));
+			add_model_at(&model_cube, Vec3::new(4., 0., -2.));
+			add_model_at(&model_cube, Vec3::new(0., 3., -3.));
+			add_model_at(&model_cube, Vec3::new(-4., 0., -4.));
 			scene = accum.finish(&bindless, camera)?;
 		}
 
