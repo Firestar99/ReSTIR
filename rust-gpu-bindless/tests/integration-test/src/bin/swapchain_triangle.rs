@@ -10,12 +10,12 @@ use rust_gpu_bindless_core::descriptor::{
 	Bindless, BindlessAllocationScheme, BindlessBufferCreateInfo, BindlessBufferUsage, BindlessImageUsage,
 	BindlessInstance, DescriptorCounts, Format, Image2d, MutDesc, MutImage, RCDescExt,
 };
-use rust_gpu_bindless_core::pipeline::DrawIndirectCommand;
 use rust_gpu_bindless_core::pipeline::{
-	BindlessGraphicsPipeline, ClearValue, ColorAttachment, GraphicsPipelineCreateInfo, LoadOp, MutImageAccessExt,
+	BindlessGraphicsPipeline, ColorAttachment, GraphicsPipelineCreateInfo, LoadOp, MutImageAccessExt,
 	PipelineDepthStencilStateCreateInfo, PipelineInputAssemblyStateCreateInfo, PipelineRasterizationStateCreateInfo,
 	Present, RenderPassFormat, RenderingAttachment, StoreOp,
 };
+use rust_gpu_bindless_core::pipeline::{DrawIndirectCommand, RenderingAttachmentImage};
 use rust_gpu_bindless_core::platform::BindlessPipelinePlatform;
 use rust_gpu_bindless_core::platform::ash::Debuggers;
 use rust_gpu_bindless_core::platform::ash::{Ash, AshSingleGraphicsQueueCreateInfo, ash_init_single_graphics_queue};
@@ -183,8 +183,11 @@ impl<P: BindlessPipelinePlatform> TriangleRenderer<P> {
 			cmd.begin_rendering(
 				self.rt_format.to_render_pass_format(),
 				&[RenderingAttachment {
-					image: &mut rt,
-					load_op: LoadOp::Clear(ClearValue::ColorF(ColorEnum::Black.color().to_array())),
+					image: RenderingAttachmentImage::ColorF {
+						image: &mut rt,
+						clear_value: ColorEnum::Black.color(),
+					},
+					load_op: LoadOp::Clear,
 					store_op: StoreOp::Store,
 				}],
 				None,

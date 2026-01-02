@@ -15,9 +15,10 @@ use rust_gpu_bindless_core::descriptor::{
 	MutDescBufferExt, RCDescExt,
 };
 use rust_gpu_bindless_core::pipeline::{
-	ClearValue, ColorAttachment, DrawIndirectCommand, GraphicsPipelineCreateInfo, HostAccess, LoadOp,
-	MutBufferAccessExt, MutImageAccessExt, PipelineDepthStencilStateCreateInfo, PipelineInputAssemblyStateCreateInfo,
-	PipelineRasterizationStateCreateInfo, RenderPassFormat, RenderingAttachment, StoreOp, TransferRead, TransferWrite,
+	ColorAttachment, DrawIndirectCommand, GraphicsPipelineCreateInfo, HostAccess, LoadOp, MutBufferAccessExt,
+	MutImageAccessExt, PipelineDepthStencilStateCreateInfo, PipelineInputAssemblyStateCreateInfo,
+	PipelineRasterizationStateCreateInfo, RenderPassFormat, RenderingAttachment, RenderingAttachmentImage, StoreOp,
+	TransferRead, TransferWrite,
 };
 use rust_gpu_bindless_core::platform::BindlessPipelinePlatform;
 use rust_gpu_bindless_core::platform::ash::{Ash, AshSingleGraphicsQueueCreateInfo, ash_init_single_graphics_queue};
@@ -113,8 +114,11 @@ async fn test_triangle<P: BindlessPipelinePlatform>(bindless: &Bindless<P>) -> a
 		cmd.begin_rendering(
 			render_pass_format,
 			&[RenderingAttachment {
-				image: &mut image,
-				load_op: LoadOp::Clear(ClearValue::ColorF(B.color().to_array())),
+				image: RenderingAttachmentImage::ColorF {
+					image: &mut image,
+					clear_value: B.color(),
+				},
+				load_op: LoadOp::Clear,
 				store_op: StoreOp::Store,
 			}],
 			None,

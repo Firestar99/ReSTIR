@@ -2,7 +2,7 @@ use crate::descriptor::{
 	AddressMode, BindlessAllocationScheme, BindlessBufferUsage, BindlessImageUsage, BorderColor, Extent, Filter,
 	SampleCount,
 };
-use crate::pipeline::{ClearValue, ImageAccessType, IndexType, LoadOp, RenderingAttachment, StoreOp};
+use crate::pipeline::{ImageAccessType, IndexType, LoadOp, RenderingAttachment, RenderingAttachmentImage, StoreOp};
 use crate::platform::ash::Ash;
 use ash::vk::{
 	AttachmentLoadOp, AttachmentStoreOp, Extent2D, ImageLayout, ImageType as VkImageType, RenderingAttachmentInfo,
@@ -201,15 +201,8 @@ impl LoadOp {
 	pub fn to_ash(&self) -> AttachmentLoadOp {
 		match self {
 			LoadOp::Load => AttachmentLoadOp::LOAD,
-			LoadOp::Clear(_) => AttachmentLoadOp::CLEAR,
+			LoadOp::Clear => AttachmentLoadOp::CLEAR,
 			LoadOp::DontCare => AttachmentLoadOp::DONT_CARE,
-		}
-	}
-
-	pub fn to_ash_clear_color(&self) -> ash::vk::ClearValue {
-		match self {
-			LoadOp::Clear(c) => c.to_ash(),
-			LoadOp::Load | LoadOp::DontCare => ash::vk::ClearValue::default(),
 		}
 	}
 }
@@ -223,16 +216,20 @@ impl StoreOp {
 	}
 }
 
-impl ClearValue {
-	pub fn to_ash(&self) -> ash::vk::ClearValue {
+impl<'a, 'b, A: ImageAccessType> RenderingAttachmentImage<'a, 'b, Ash, A> {
+	pub fn to_ash_clear_color(&self) -> ash::vk::ClearValue {
 		let mut ret = ash::vk::ClearValue::default();
-		match *self {
-			ClearValue::ColorF(a) => ret.color.float32 = a,
-			ClearValue::ColorU(a) => ret.color.uint32 = a,
-			ClearValue::ColorI(a) => ret.color.int32 = a,
-			ClearValue::DepthStencil { depth, stencil } => {
-				ret.depth_stencil.depth = depth;
-				ret.depth_stencil.stencil = stencil;
+		match self {
+			Self::ColorF { clear_value, .. } => ret.color.float32 = clear_value.to_array(),
+			Self::ColorU { clear_value, .. } => ret.color.uint32 = clear_value.to_array(),
+			Self::ColorI { clear_value, .. } => ret.color.int32 = clear_value.to_array(),
+			Self::DepthStencil {
+				clear_depth,
+				clear_stencil,
+				..
+			} => {
+				ret.depth_stencil.depth = *clear_depth;
+				ret.depth_stencil.stencil = *clear_stencil;
 			}
 		}
 		ret
@@ -247,7 +244,7 @@ impl<A: ImageAccessType> RenderingAttachment<'_, '_, Ash, A> {
 				.image_layout(layout)
 				.load_op(self.load_op.to_ash())
 				.store_op(self.store_op.to_ash())
-				.clear_value(self.load_op.to_ash_clear_color())
+				.clear_value(self.image.to_ash_clear_color())
 		}
 	}
 }

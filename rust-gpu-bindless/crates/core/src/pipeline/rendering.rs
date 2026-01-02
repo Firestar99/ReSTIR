@@ -1,4 +1,4 @@
-use crate::descriptor::{Bindless, BindlessBufferUsage, Extent, Format};
+use crate::descriptor::{Bindless, BindlessBufferUsage, Extent, Format, ImageSlot};
 use crate::pipeline::access_image::MutImageAccess;
 use crate::pipeline::access_type::{
 	ColorAttachment, DepthStencilAttachment, ImageAccessType, IndexReadable, IndirectCommandReadable,
@@ -12,7 +12,7 @@ use crate::platform::ash::Ash;
 use crate::platform::{BindlessPipelinePlatform, RenderingContext};
 use glam::{IVec2, UVec2};
 use rust_gpu_bindless_shaders::buffer_content::BufferStruct;
-use rust_gpu_bindless_shaders::descriptor::{Image2d, TransientAccess};
+use rust_gpu_bindless_shaders::descriptor::{Image2d, Image2dI, Image2dU, TransientAccess};
 use rust_gpu_bindless_shaders::utils::rect::IRect2;
 use rust_gpu_bindless_shaders::utils::viewport::Viewport;
 use smallvec::SmallVec;
@@ -42,7 +42,7 @@ impl RenderPassFormat {
 #[derive(Debug, Copy, Clone)]
 pub enum LoadOp {
 	Load,
-	Clear(ClearValue),
+	Clear,
 	DontCare,
 }
 
@@ -52,16 +52,41 @@ pub enum StoreOp {
 	DontCare,
 }
 
-#[derive(Debug, Copy, Clone)]
-pub enum ClearValue {
-	ColorF([f32; 4]),
-	ColorU([u32; 4]),
-	ColorI([i32; 4]),
-	DepthStencil { depth: f32, stencil: u32 },
+pub enum RenderingAttachmentImage<'a, 'b, P: BindlessPipelinePlatform, A: ImageAccessType> {
+	ColorF {
+		image: &'b mut MutImageAccess<'a, P, Image2d, A>,
+		clear_value: glam::Vec4,
+	},
+	ColorU {
+		image: &'b mut MutImageAccess<'a, P, Image2dU, A>,
+		clear_value: glam::UVec4,
+	},
+	ColorI {
+		image: &'b mut MutImageAccess<'a, P, Image2dI, A>,
+		clear_value: glam::IVec4,
+	},
+	DepthStencil {
+		image: &'b mut MutImageAccess<'a, P, Image2d, A>,
+		clear_depth: f32,
+		clear_stencil: u32,
+	},
+}
+
+impl<'a, 'b, P: BindlessPipelinePlatform, A: ImageAccessType> RenderingAttachmentImage<'a, 'b, P, A> {
+	pub unsafe fn inner_slot(&self) -> &ImageSlot<P> {
+		unsafe {
+			match self {
+				RenderingAttachmentImage::ColorF { image, .. } => image.inner_slot(),
+				RenderingAttachmentImage::ColorU { image, .. } => image.inner_slot(),
+				RenderingAttachmentImage::ColorI { image, .. } => image.inner_slot(),
+				RenderingAttachmentImage::DepthStencil { image, .. } => image.inner_slot(),
+			}
+		}
+	}
 }
 
 pub struct RenderingAttachment<'a, 'b, P: BindlessPipelinePlatform, A: ImageAccessType> {
-	pub image: &'b mut MutImageAccess<'a, P, Image2d, A>,
+	pub image: RenderingAttachmentImage<'a, 'b, P, A>,
 	pub load_op: LoadOp,
 	pub store_op: StoreOp,
 }

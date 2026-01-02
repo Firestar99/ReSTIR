@@ -1,5 +1,6 @@
+use glam::Vec4;
 use rust_gpu_bindless_core::descriptor::{BindlessImageUsage, BindlessInstance, DescriptorCounts};
-use rust_gpu_bindless_core::pipeline::{ClearValue, ColorAttachment, LoadOp, MutImageAccessExt, Present};
+use rust_gpu_bindless_core::pipeline::{ColorAttachment, LoadOp, MutImageAccessExt, Present};
 use rust_gpu_bindless_core::platform::ash::Debuggers;
 use rust_gpu_bindless_core::platform::ash::{Ash, AshSingleGraphicsQueueCreateInfo, ash_init_single_graphics_queue};
 use rust_gpu_bindless_egui::renderer::{EguiRenderPipeline, EguiRenderer, EguiRenderingOptions};
@@ -110,7 +111,8 @@ pub async fn main_loop(
 					Some(&mut rt),
 					None,
 					EguiRenderingOptions {
-						image_rt_load_op: LoadOp::Clear(ClearValue::ColorF([0.; 4])),
+						image_rt_load_op: LoadOp::Clear,
+						image_rt_clear_value: Vec4::ZERO,
 						..EguiRenderingOptions::default()
 					},
 				)

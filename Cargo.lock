@@ -2130,6 +2130,7 @@ dependencies = [
  "ash",
  "egui",
  "egui_demo_lib",
+ "glam",
  "profiling",
  "rust-gpu-bindless-core",
  "rust-gpu-bindless-egui",

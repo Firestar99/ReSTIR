@@ -26,6 +26,7 @@ rust-gpu-bindless-winit = { workspace = true, features = ["ash"] }
 # vulkan
 ash = { workspace = true }
 winit = { workspace = true }
+glam = { workspace = true }
 
 # profiling
 profiling = { workspace = true }

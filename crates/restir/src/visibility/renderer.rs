@@ -2,13 +2,14 @@ use crate::visibility::debug::VisiDebugPipeline;
 use crate::visibility::raster::VisiRasterPipeline;
 use crate::visibility::scene::CpuScene;
 use anyhow::anyhow;
+use glam::UVec4;
 use rust_gpu_bindless::descriptor::{
 	Bindless, BindlessAllocationScheme, BindlessImageCreateInfo, BindlessImageUsage, Extent, Format, Image2d, Image2dU,
 	ImageDescExt, MutDesc, MutImage, RCDescExt,
 };
 use rust_gpu_bindless::pipeline::{
-	ClearValue, ColorAttachment, DepthStencilAttachment, ImageAccessType, LoadOp, MutImageAccess, MutImageAccessExt,
-	Recording, RenderPassFormat, RenderingAttachment, SampledRead, StorageReadWrite, StoreOp,
+	ColorAttachment, DepthStencilAttachment, ImageAccessType, LoadOp, MutImageAccess, MutImageAccessExt, Recording,
+	RenderPassFormat, RenderingAttachment, RenderingAttachmentImage, SampledRead, StorageReadWrite, StoreOp,
 };
 use smallvec::SmallVec;
 use std::sync::Arc;
@@ -142,13 +143,20 @@ impl VisiRenderer {
 		cmd.begin_rendering(
 			self.pipeline.format.to_render_pass_format(),
 			&[RenderingAttachment {
-				image: &mut packed_vertex_image,
-				load_op: LoadOp::Clear(ClearValue::ColorU([!0; 4])),
+				image: RenderingAttachmentImage::ColorU {
+					image: &mut packed_vertex_image,
+					clear_value: UVec4::splat(!0),
+				},
+				load_op: LoadOp::Clear,
 				store_op: StoreOp::Store,
 			}],
 			Some(RenderingAttachment {
-				image: &mut depth,
-				load_op: LoadOp::Clear(ClearValue::DepthStencil { depth: 0.0, stencil: 0 }),
+				image: RenderingAttachmentImage::DepthStencil {
+					image: &mut depth,
+					clear_depth: 0.0,
+					clear_stencil: 0,
+				},
+				load_op: LoadOp::Clear,
 				store_op: StoreOp::DontCare,
 			}),
 			|mut rp| {
@@ -160,7 +168,7 @@ impl VisiRenderer {
 			},
 		)?;
 
-		let mut packed_vertex_image = packed_vertex_image.transition::<SampledRead>()?;
+		let packed_vertex_image = packed_vertex_image.transition::<SampledRead>()?;
 		self.pipeline.debug_pipeline.dispatch(
 			cmd,
 			scene,

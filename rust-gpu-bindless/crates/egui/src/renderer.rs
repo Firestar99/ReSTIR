@@ -9,7 +9,7 @@ use egui::epaint::Primitive;
 use egui::{
 	Context, FullOutput, ImageData, PlatformOutput, RawInput, Rect, TextureId, TextureOptions, TexturesDelta, epaint,
 };
-use glam::{IVec2, UVec2};
+use glam::{IVec2, UVec2, Vec4};
 use parking_lot::Mutex;
 use rust_gpu_bindless_core::descriptor::{
 	Bindless, BindlessAllocationScheme, BindlessBufferCreateInfo, BindlessBufferUsage, BindlessImageCreateInfo,
@@ -20,7 +20,7 @@ use rust_gpu_bindless_core::descriptor::{
 use rust_gpu_bindless_core::pipeline::{
 	BindlessGraphicsPipeline, ColorAttachment, DepthStencilAttachment, GraphicsPipelineCreateInfo, HasResourceContext,
 	ImageAccessType, LoadOp, MutBufferAccessExt, MutImageAccess, MutImageAccessExt, Recording, RecordingError,
-	RenderPassFormat, RenderingAttachment, StoreOp, TransferRead, TransferWrite,
+	RenderPassFormat, RenderingAttachment, RenderingAttachmentImage, StoreOp, TransferRead, TransferWrite,
 };
 use rust_gpu_bindless_core::platform::RecordingResourceContext;
 use rust_gpu_bindless_egui_shaders::{Param, ParamFlags, Vertex};
@@ -471,7 +471,10 @@ struct DrawCmd {
 #[derive(Debug, Clone)]
 pub struct EguiRenderingOptions {
 	pub image_rt_load_op: LoadOp,
+	pub image_rt_clear_value: Vec4,
 	pub depth_rt_load_op: LoadOp,
+	pub depth_rt_clear_depth: f32,
+	pub depth_rt_clear_stencil: u32,
 	pub render_scale: f32,
 }
 
@@ -479,7 +482,10 @@ impl Default for EguiRenderingOptions {
 	fn default() -> Self {
 		Self {
 			image_rt_load_op: LoadOp::Load,
+			image_rt_clear_value: Vec4::ZERO,
 			depth_rt_load_op: LoadOp::Load,
+			depth_rt_clear_depth: 0.0,
+			depth_rt_clear_stencil: 0,
 			render_scale: 1.0,
 		}
 	}
@@ -546,13 +552,20 @@ impl<P: EguiBindlessPlatform> EguiRenderOutput<'_, P> {
 			pipeline.render_pass_format(),
 			color
 				.map(|(_, color)| RenderingAttachment {
-					image: color,
+					image: RenderingAttachmentImage::ColorF {
+						image: color,
+						clear_value: options.image_rt_clear_value,
+					},
 					load_op: options.image_rt_load_op,
 					store_op: StoreOp::Store,
 				})
 				.as_slice(),
 			depth.map(|(_, depth)| RenderingAttachment {
-				image: depth,
+				image: RenderingAttachmentImage::DepthStencil {
+					image: depth,
+					clear_depth: options.depth_rt_clear_depth,
+					clear_stencil: options.depth_rt_clear_stencil,
+				},
 				load_op: options.depth_rt_load_op,
 				store_op: StoreOp::Store,
 			}),
