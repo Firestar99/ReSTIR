@@ -19,7 +19,7 @@ const_assert_eq!(TRIANGLE_MASK << TRIANGLE_SHIFT | INSTANCE_MASK << INSTANCE_SHI
 // masks do not overlap
 const_assert_eq!(TRIANGLE_MASK << TRIANGLE_SHIFT & INSTANCE_MASK << INSTANCE_SHIFT, 0);
 
-#[derive(Copy, Clone, Debug, Eq, PartialEq, BufferStructPlain)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq, Hash, BufferStructPlain)]
 pub struct TriangleId(u32);
 const_assert_eq!(size_of::<TriangleId>(), 4);
 
@@ -63,7 +63,7 @@ impl TriangleId {
 	}
 }
 
-#[derive(Copy, Clone, Debug, Eq, PartialEq, BufferStructPlain)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq, Hash, BufferStructPlain)]
 pub struct InstanceId(u32);
 const_assert_eq!(size_of::<InstanceId>(), 4);
 
@@ -107,14 +107,27 @@ impl InstanceId {
 	}
 }
 
-/// The raw unsafe descriptor identifier to locate a resource. Internally it's a bit packed u32 containing the
-/// [`DescriptorType`], [`DescriptorIndex`] and version. All other descriptors use `DescriptorId` internally.
+#[repr(C)]
+#[derive(Copy, Clone, Debug, Hash, Eq, PartialEq, BufferStructPlain)]
+pub struct GeometryId {
+	pub instance_id: InstanceId,
+	pub triangle_id: TriangleId,
+}
+
+impl GeometryId {
+	pub const fn pack(&self) -> PackedGeometryId {
+		PackedGeometryId::new(self.instance_id, self.triangle_id)
+	}
+}
+
 #[repr(transparent)]
 #[derive(Copy, Clone, Hash, Eq, PartialEq, BufferStructPlain)]
-pub struct PackedVertexId(u32);
-const_assert_eq!(size_of::<PackedVertexId>(), 4);
+pub struct PackedGeometryId(u32);
+const_assert_eq!(size_of::<PackedGeometryId>(), 4);
 
-impl PackedVertexId {
+impl PackedGeometryId {
+	pub const CLEAR: Self = Self(!0);
+
 	pub const fn new(instance_id: InstanceId, triangle_id: TriangleId) -> Self {
 		let mut value = 0;
 		value |= (instance_id.0 & INSTANCE_MASK) << INSTANCE_SHIFT;
@@ -122,12 +135,15 @@ impl PackedVertexId {
 		Self(value)
 	}
 
-	pub const fn instance_id(&self) -> InstanceId {
-		InstanceId((self.0 >> INSTANCE_SHIFT) & INSTANCE_MASK)
+	pub const fn unpack(&self) -> GeometryId {
+		GeometryId {
+			instance_id: InstanceId((self.0 >> INSTANCE_SHIFT) & INSTANCE_MASK),
+			triangle_id: TriangleId((self.0 >> TRIANGLE_SHIFT) & TRIANGLE_MASK),
+		}
 	}
 
-	pub const fn triangle_id(&self) -> TriangleId {
-		TriangleId((self.0 >> TRIANGLE_SHIFT) & TRIANGLE_MASK)
+	pub const fn is_clear(&self) -> bool {
+		self.0 == Self::CLEAR.0
 	}
 
 	pub const fn from_u32(value: u32) -> Self {
@@ -139,11 +155,8 @@ impl PackedVertexId {
 	}
 }
 
-impl Debug for PackedVertexId {
+impl Debug for PackedGeometryId {
 	fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
-		f.debug_struct("PackedVertexId")
-			.field("instance_id", &self.instance_id())
-			.field("triangle_id", &self.triangle_id())
-			.finish()
+		f.debug_tuple("PackedGeometryId").field(&self.unpack()).finish()
 	}
 }

@@ -1,4 +1,4 @@
-use crate::visibility::id::{InstanceId, PackedVertexId, TriangleId};
+use crate::visibility::id::{InstanceId, PackedGeometryId, TriangleId};
 use crate::visibility::scene::{Model, Scene};
 use glam::Vec4;
 use rust_gpu_bindless_macros::{BufferStruct, bindless};
@@ -18,7 +18,7 @@ pub fn visibility_vert(
 	#[spirv(vertex_index)] vertex_id: u32,
 	#[spirv(instance_index)] instance_id: u32,
 	#[spirv(position)] out_position: &mut Vec4,
-	#[spirv(flat)] packed_vertex_id: &mut PackedVertexId,
+	#[spirv(flat)] packed_vertex_id: &mut PackedGeometryId,
 ) {
 	let instance_id = unsafe { InstanceId::new_unchecked(instance_id) };
 	let scene = param.scene.access(&descriptors).load();
@@ -33,7 +33,7 @@ pub fn visibility_vert(
 	*out_position = vtx_pos.clip_space;
 
 	let triangle_id = unsafe { TriangleId::new_unchecked(vertex_id % 3) };
-	*packed_vertex_id = PackedVertexId::new(instance_id, triangle_id);
+	*packed_vertex_id = PackedGeometryId::new(instance_id, triangle_id);
 }
 
 #[bindless(fragment())]
