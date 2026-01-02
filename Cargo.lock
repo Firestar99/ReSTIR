@@ -2021,10 +2021,12 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "ash",
+ "egui",
  "glam",
  "profiling",
  "restir-shader",
  "rust-gpu-bindless",
+ "rust-gpu-bindless-egui",
  "rust-gpu-bindless-shader-builder",
  "rust-gpu-bindless-winit",
  "smallvec",

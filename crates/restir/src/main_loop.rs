@@ -1,18 +1,22 @@
 use crate::controls::app_focus::AppFocus;
 use crate::controls::delta_time::DeltaTimer;
 use crate::controls::fps_camera_controller::FpsCameraController;
+use crate::controls::fps_ui::FpsUi;
 use crate::debugger;
 use crate::visibility::model::CpuModel;
 use crate::visibility::renderer::{VisiPipelines, VisiPipelinesFormat};
 use crate::visibility::scene::CpuSceneAccum;
+use egui::Context;
 use glam::{Affine3A, UVec3, Vec3, Vec3Swizzles};
 use restir_shader::camera::Camera;
 use restir_shader::utils::affine_transform::AffineTransform;
 use restir_shader::visibility::scene::InstanceInfo;
 use rust_gpu_bindless::descriptor::{BindlessImageUsage, BindlessInstance, DescriptorCounts, ImageDescExt};
-use rust_gpu_bindless::pipeline::{MutImageAccessExt, Present, StorageReadWrite};
+use rust_gpu_bindless::pipeline::{ColorAttachment, LoadOp, MutImageAccessExt, Present, StorageReadWrite};
 use rust_gpu_bindless::platform::ash::Debuggers;
 use rust_gpu_bindless::platform::ash::{AshSingleGraphicsQueueCreateInfo, ash_init_single_graphics_queue};
+use rust_gpu_bindless_egui::renderer::{EguiRenderPipeline, EguiRenderer, EguiRenderingOptions};
+use rust_gpu_bindless_egui::winit_integration::EguiWinitContext;
 use rust_gpu_bindless_winit::ash::{
 	AshSwapchain, AshSwapchainParams, SwapchainImageFormatPreference, ash_enumerate_required_extensions,
 };
@@ -66,22 +70,34 @@ pub async fn main_loop(event_loop: EventLoopExecutor, events: Receiver<Event<()>
 			AshSwapchainParams::automatic_best(
 				&bindless2,
 				surface,
-				BindlessImageUsage::STORAGE,
+				BindlessImageUsage::STORAGE | BindlessImageUsage::COLOR_ATTACHMENT,
 				SwapchainImageFormatPreference::UNORM,
 			)
 		})
 	}
 	.await?;
+	let swapchain_format = swapchain.params().format;
 
-	let visi_format = VisiPipelinesFormat::new(&bindless, swapchain.params().format);
+	let visi_format = VisiPipelinesFormat::new(&bindless, swapchain_format);
 	let visi_pipelines = VisiPipelines::new(&bindless, visi_format)?;
 	let mut visi_renderer = visi_pipelines.new_renderer();
+
+	let egui_renderer = EguiRenderer::new(bindless.clone());
+	let egui_render_pipeline = EguiRenderPipeline::new(egui_renderer.clone(), Some(swapchain_format), None);
+	let mut egui_ctx = {
+		let renderer = egui_renderer.clone();
+		let window = window.clone();
+		event_loop
+			.spawn(move |e| EguiWinitContext::new(renderer, Context::default(), e, window.get(e).clone()))
+			.await
+	};
 
 	let model_cube = crate::visibility::debug_models::cube(&bindless, Affine3A::default())?;
 
 	let mut delta_timer = DeltaTimer::new();
 	let mut app_focus = AppFocus::new(event_loop.clone(), window);
 	let mut camera_controls = FpsCameraController::default();
+	let mut fps_ui = FpsUi::new();
 
 	'outer: loop {
 		{
@@ -111,6 +127,7 @@ pub async fn main_loop(event_loop: EventLoopExecutor, events: Receiver<Event<()>
 		{
 			profiling::scope!("update");
 			let delta_time = delta_timer.next();
+			fps_ui.update(delta_time);
 
 			let out_extent = UVec3::from(swapchain_image.extent()).xy();
 			let fov_y = 90.;
@@ -138,12 +155,32 @@ pub async fn main_loop(event_loop: EventLoopExecutor, events: Receiver<Event<()>
 			scene = accum.finish(&bindless, camera)?;
 		}
 
+		let egui_output = {
+			profiling::scope!("update egui");
+			egui_ctx.run(|ctx| {
+				fps_ui.ui(ctx);
+			})?
+		};
+
 		let swapchain_image = {
 			profiling::scope!("render");
 			bindless.execute(|mut cmd| {
-				let rt = swapchain_image.access_dont_care::<StorageReadWrite>(&cmd)?;
-				visi_renderer.render(&mut cmd, scene, &rt).unwrap();
-				Ok(rt.transition::<Present>()?.into_desc())
+				let output_image = swapchain_image.access_dont_care::<StorageReadWrite>(&cmd)?;
+				visi_renderer.render(&mut cmd, scene, &output_image).unwrap();
+				let mut output_image = output_image.transition::<ColorAttachment>()?;
+				egui_output
+					.draw(
+						&egui_render_pipeline,
+						cmd,
+						Some(&mut output_image),
+						None,
+						EguiRenderingOptions {
+							image_rt_load_op: LoadOp::Load,
+							..Default::default()
+						},
+					)
+					.unwrap();
+				Ok(output_image.transition::<Present>()?.into_desc())
 			})?
 		};
 

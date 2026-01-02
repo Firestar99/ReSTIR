@@ -23,6 +23,10 @@ ash.workspace = true
 # bytes and numbers
 glam.workspace = true
 
+# egui
+egui = { workspace = true }
+rust-gpu-bindless-egui = { workspace = true, features = ["winit"] }
+
 # other
 smallvec.workspace = true
 anyhow.workspace = true
