@@ -1,6 +1,9 @@
 use rust_gpu_bindless_shader_builder::ShaderSymbolsBuilder;
+use rust_gpu_bindless_shader_builder::spirv_builder::Capability;
 
 fn main() -> anyhow::Result<()> {
-	ShaderSymbolsBuilder::new("restir-shader", "spirv-unknown-vulkan1.3")?.build()?;
+	ShaderSymbolsBuilder::new("restir-shader", "spirv-unknown-vulkan1.3")?
+		.capability(Capability::Geometry)
+		.build()?;
 	Ok(())
 }
