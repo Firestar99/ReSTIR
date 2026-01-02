@@ -3,7 +3,7 @@ use crate::visibility::scene::CpuDraw;
 use ash::vk::{ColorComponentFlags, CompareOp, PipelineColorBlendAttachmentState, PrimitiveTopology};
 use restir_shader::visibility::raster::Param;
 use restir_shader::visibility::scene::Scene;
-use rust_gpu_bindless::descriptor::{Bindless, Buffer, DescBufferLenExt, RCDescExt, TransientDesc};
+use rust_gpu_bindless::descriptor::{Bindless, Buffer, RCDescExt, TransientDesc};
 use rust_gpu_bindless::pipeline::{
 	BindlessGraphicsPipeline, DrawIndexedIndirectCommand, GraphicsPipelineCreateInfo,
 	PipelineColorBlendStateCreateInfo, PipelineDepthStencilStateCreateInfo, PipelineInputAssemblyStateCreateInfo,
@@ -47,7 +47,7 @@ impl VisiRasterPipeline {
 			&self.pipeline,
 			&draw.model.indices,
 			DrawIndexedIndirectCommand {
-				index_count: draw.model.indices.len() as u32,
+				index_count: draw.model.indices_count,
 				instance_count: draw.instance_count,
 				first_index: 0,
 				vertex_offset: 0,

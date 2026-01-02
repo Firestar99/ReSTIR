@@ -1,12 +1,15 @@
 use restir_shader::visibility::scene::{Model, TriangleIndices, Vertex};
+use rust_gpu_bindless::__private::static_assertions::const_assert_eq;
 use rust_gpu_bindless::descriptor::{
-	Bindless, BindlessBufferCreateInfo, BindlessBufferUsage, Buffer, RCDesc, RCDescExt,
+	Bindless, BindlessBufferCreateInfo, BindlessBufferUsage, Buffer, DescBufferLenExt, RCDesc, RCDescExt,
 };
 
 #[derive(Clone, Eq, PartialEq, Hash)]
 pub struct CpuModel {
 	pub model: RCDesc<Buffer<Model>>,
 	pub indices: RCDesc<Buffer<[u32]>>,
+	/// Use this instead of `indices.len()`. Silly len repr in bindless strikes again.
+	pub indices_count: u32,
 }
 
 impl CpuModel {
@@ -21,7 +24,7 @@ impl CpuModel {
 					| BindlessBufferUsage::STORAGE_BUFFER
 					| BindlessBufferUsage::INDEX_BUFFER,
 				allocation_scheme: Default::default(),
-				name: "triangle indices",
+				name: "visi model indices",
 			},
 			indices,
 		)?;
@@ -30,7 +33,7 @@ impl CpuModel {
 			&BindlessBufferCreateInfo {
 				usage: BindlessBufferUsage::MAP_WRITE | BindlessBufferUsage::STORAGE_BUFFER,
 				allocation_scheme: Default::default(),
-				name: "vertices",
+				name: "visi model vertices",
 			},
 			vertices,
 		)?;
@@ -39,7 +42,7 @@ impl CpuModel {
 			&BindlessBufferCreateInfo {
 				usage: BindlessBufferUsage::MAP_WRITE | BindlessBufferUsage::STORAGE_BUFFER,
 				allocation_scheme: Default::default(),
-				name: "model",
+				name: "visi model",
 			},
 			Model {
 				triangles: triangles.to_strong(),
@@ -49,6 +52,12 @@ impl CpuModel {
 
 		// transmute `[TriangleIndices]` -> `[u32]`
 		let indices = unsafe { RCDesc::new_inner(triangles.r) };
-		Ok(Self { model, indices })
+		const_assert_eq!(3, size_of::<TriangleIndices>() / size_of::<u32>());
+		let indices_count = indices.len() as u32 * 3;
+		Ok(Self {
+			model,
+			indices,
+			indices_count,
+		})
 	}
 }
