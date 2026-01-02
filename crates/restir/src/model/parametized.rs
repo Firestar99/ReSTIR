@@ -1,4 +1,4 @@
-use crate::visibility::model::CpuModel;
+use crate::model::CpuModel;
 use glam::{Affine3A, Vec3};
 use restir_shader::visibility::scene::{TriangleIndices, Vertex};
 use rust_gpu_bindless::descriptor::Bindless;

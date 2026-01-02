@@ -1,4 +1,4 @@
-use crate::visibility::model::CpuModel;
+use crate::model::CpuModel;
 use restir_shader::camera::Camera;
 use restir_shader::visibility::id::InstanceId;
 use restir_shader::visibility::scene::{Instance, InstanceInfo, Scene};

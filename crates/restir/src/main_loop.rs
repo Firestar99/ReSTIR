@@ -3,7 +3,7 @@ use crate::controls::delta_time::DeltaTimer;
 use crate::controls::fps_camera_controller::FpsCameraController;
 use crate::controls::fps_ui::FpsUi;
 use crate::debugger;
-use crate::visibility::model::CpuModel;
+use crate::model::CpuModel;
 use crate::visibility::renderer::{VisiPipelines, VisiPipelinesFormat};
 use crate::visibility::scene::CpuSceneAccum;
 use egui::Context;
@@ -92,7 +92,7 @@ pub async fn main_loop(event_loop: EventLoopExecutor, events: Receiver<Event<()>
 			.await
 	};
 
-	let model_cube = crate::visibility::debug_models::cube(&bindless, Affine3A::default())?;
+	let model_cube = crate::model::parametized::cube(&bindless, Affine3A::default())?;
 
 	let mut delta_timer = DeltaTimer::new();
 	let mut app_focus = AppFocus::new(event_loop.clone(), window);
