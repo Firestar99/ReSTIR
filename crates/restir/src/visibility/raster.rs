@@ -1,8 +1,8 @@
 use crate::visibility::renderer::VisiPipelinesFormat;
-use crate::visibility::scene::CpuDraw;
+use crate::visibility::scene::VisiCpuDraw;
 use ash::vk::{ColorComponentFlags, CompareOp, PipelineColorBlendAttachmentState, PrimitiveTopology};
 use restir_shader::visibility::raster::Param;
-use restir_shader::visibility::scene::Scene;
+use restir_shader::visibility::scene::VisiScene;
 use rust_gpu_bindless::descriptor::{Bindless, Buffer, RCDescExt, TransientDesc};
 use rust_gpu_bindless::pipeline::{
 	BindlessGraphicsPipeline, DrawIndexedIndirectCommand, GraphicsPipelineCreateInfo,
@@ -40,8 +40,8 @@ impl VisiRasterPipeline {
 	pub fn draw(
 		&self,
 		rp: &mut Rendering,
-		scene: TransientDesc<Buffer<Scene>>,
-		draw: &CpuDraw,
+		scene: TransientDesc<Buffer<VisiScene>>,
+		draw: &VisiCpuDraw,
 	) -> Result<(), RecordingError> {
 		rp.draw_indexed(
 			&self.pipeline,

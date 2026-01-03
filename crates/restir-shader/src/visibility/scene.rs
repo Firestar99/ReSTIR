@@ -8,33 +8,33 @@ use rust_gpu_bindless_shaders::descriptor::{Buffer, Descriptors, StrongDesc};
 
 #[repr(C)]
 #[derive(Copy, Clone, Debug, BufferStruct)]
-pub struct Scene {
-	pub instances: StrongDesc<Buffer<[Instance]>>,
+pub struct VisiScene {
+	pub instances: StrongDesc<Buffer<[VisiInstance]>>,
 	pub camera: Camera,
 }
 
-impl Scene {
-	pub fn load_instance(&self, descriptors: &Descriptors, instance_id: InstanceId) -> Instance {
+impl VisiScene {
+	pub fn load_instance(&self, descriptors: &Descriptors, instance_id: InstanceId) -> VisiInstance {
 		self.instances.access(descriptors).load(instance_id.to_usize())
 	}
 }
 
 #[repr(C)]
 #[derive(Copy, Clone, Debug, BufferStruct)]
-pub struct Instance {
-	pub model: StrongDesc<Buffer<Model>>,
-	pub info: InstanceInfo,
+pub struct VisiInstance {
+	pub model: StrongDesc<Buffer<VisiModel>>,
+	pub info: VisiInstanceInfo,
 }
 
-impl Deref for Instance {
-	type Target = InstanceInfo;
+impl Deref for VisiInstance {
+	type Target = VisiInstanceInfo;
 
 	fn deref(&self) -> &Self::Target {
 		&self.info
 	}
 }
 
-impl DerefMut for Instance {
+impl DerefMut for VisiInstance {
 	fn deref_mut(&mut self) -> &mut Self::Target {
 		&mut self.info
 	}
@@ -42,22 +42,22 @@ impl DerefMut for Instance {
 
 #[repr(C)]
 #[derive(Copy, Clone, Debug, BufferStruct)]
-pub struct InstanceInfo {
+pub struct VisiInstanceInfo {
 	pub world_from_local: AffineTransform,
 }
 
 #[repr(C)]
 #[derive(Copy, Clone, Debug, BufferStruct)]
-pub struct Model {
-	pub triangles: StrongDesc<Buffer<[TriangleIndices]>>,
-	pub vertices: StrongDesc<Buffer<[Vertex]>>,
+pub struct VisiModel {
+	pub triangles: StrongDesc<Buffer<[VisiIndices]>>,
+	pub vertices: StrongDesc<Buffer<[VisiVertex]>>,
 }
 
 #[repr(C)]
 #[derive(Copy, Clone, Debug, BufferStruct)]
-pub struct TriangleIndices(pub [u32; 3]);
+pub struct VisiIndices(pub [u32; 3]);
 
-impl Deref for TriangleIndices {
+impl Deref for VisiIndices {
 	type Target = [u32; 3];
 
 	fn deref(&self) -> &Self::Target {
@@ -65,7 +65,7 @@ impl Deref for TriangleIndices {
 	}
 }
 
-impl DerefMut for TriangleIndices {
+impl DerefMut for VisiIndices {
 	fn deref_mut(&mut self) -> &mut Self::Target {
 		&mut self.0
 	}
@@ -73,29 +73,27 @@ impl DerefMut for TriangleIndices {
 
 #[repr(C)]
 #[derive(Copy, Clone, Debug)]
-pub struct Triangle {
-	pub indices: TriangleIndices,
-	pub vertices: [Vertex; 3],
+pub struct VisiTriangle {
+	pub indices: VisiIndices,
+	pub vertices: [VisiVertex; 3],
 }
 
-impl Model {
-	pub fn load_triangle(&self, descriptors: &Descriptors, triangle_id: TriangleId) -> Triangle {
+impl VisiModel {
+	pub fn load_triangle(&self, descriptors: &Descriptors, triangle_id: TriangleId) -> VisiTriangle {
 		let indices = self.triangles.access(descriptors).load(triangle_id.to_usize());
 		let vertices = [
 			self.load_vertex(descriptors, indices[0]),
 			self.load_vertex(descriptors, indices[1]),
 			self.load_vertex(descriptors, indices[2]),
 		];
-		Triangle { indices, vertices }
+		VisiTriangle { indices, vertices }
 	}
 
-	pub fn load_vertex(&self, descriptors: &Descriptors, vertex_id: u32) -> Vertex {
+	pub fn load_vertex(&self, descriptors: &Descriptors, vertex_id: u32) -> VisiVertex {
 		self.vertices.access(descriptors).load(vertex_id as usize)
 	}
 }
 
 #[repr(C)]
 #[derive(Copy, Clone, Debug, BufferStruct)]
-pub struct Vertex {
-	pub position: Vec3,
-}
+pub struct VisiVertex(pub Vec3);

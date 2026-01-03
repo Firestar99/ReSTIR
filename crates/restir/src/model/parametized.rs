@@ -1,9 +1,9 @@
-use crate::model::CpuModel;
+use crate::model::VisiCpuModel;
 use glam::{Affine3A, Vec3};
-use restir_shader::visibility::scene::{TriangleIndices, Vertex};
+use restir_shader::visibility::scene::{VisiIndices, VisiVertex};
 use rust_gpu_bindless::descriptor::Bindless;
 
-pub fn cube(bindless: &Bindless, transform: Affine3A) -> anyhow::Result<CpuModel> {
+pub fn cube(bindless: &Bindless, transform: Affine3A) -> anyhow::Result<VisiCpuModel> {
 	// from https://en.wikibooks.org/wiki/OpenGL_Programming/Modern_OpenGL_Tutorial_05
 	#[rustfmt::skip]
     let vertices = [
@@ -40,9 +40,11 @@ pub fn cube(bindless: &Bindless, transform: Affine3A) -> anyhow::Result<CpuModel
         6, 7, 3
     ];
 
-	let vertices = vertices.as_chunks::<3>().0.into_iter().map(|pos| Vertex {
-		position: transform.transform_point3(Vec3::from_array(*pos)),
-	});
-	let indices = indices.as_chunks::<3>().0.into_iter().map(|i| TriangleIndices(*i));
-	CpuModel::new(bindless, vertices, indices)
+	let vertices = vertices
+		.as_chunks::<3>()
+		.0
+		.into_iter()
+		.map(|pos| VisiVertex(transform.transform_point3(Vec3::from_array(*pos))));
+	let indices = indices.as_chunks::<3>().0.into_iter().map(|i| VisiIndices(*i));
+	VisiCpuModel::new(bindless, vertices, indices)
 }

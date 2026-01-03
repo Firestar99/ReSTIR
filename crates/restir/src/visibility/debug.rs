@@ -1,4 +1,4 @@
-use crate::visibility::scene::CpuScene;
+use crate::visibility::scene::VisiCpuScene;
 use restir_shader::visibility::debug::{DEBUG_VISI_WG_SIZE, DebugSettings, Param};
 use rust_gpu_bindless::descriptor::{Bindless, Image, Image2d, Image2dU, MutImage, RCDescExt, TransientDesc};
 use rust_gpu_bindless::pipeline::{BindlessComputePipeline, Recording};
@@ -17,7 +17,7 @@ impl VisiDebugPipeline {
 	pub fn dispatch(
 		&self,
 		cmd: &mut Recording,
-		scene: CpuScene,
+		scene: VisiCpuScene,
 		debug_settings: DebugSettings,
 		packed_vertex_image: TransientDesc<Image<Image2dU>>,
 		output_image: TransientDesc<MutImage<Image2d>>,

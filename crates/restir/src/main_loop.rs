@@ -4,14 +4,14 @@ use crate::controls::fps_camera_controller::FpsCameraController;
 use crate::controls::fps_ui::FpsUi;
 use crate::controls::visi_debug_selector::VisiDebugSettings;
 use crate::debugger;
-use crate::model::CpuModel;
+use crate::model::VisiCpuModel;
 use crate::visibility::renderer::{VisiPipelines, VisiPipelinesFormat, VisiRenderInfo};
-use crate::visibility::scene::CpuSceneAccum;
+use crate::visibility::scene::VisiCpuSceneAccum;
 use egui::{Context, Pos2};
 use glam::{Affine3A, UVec3, Vec3, Vec3Swizzles};
 use restir_shader::camera::Camera;
 use restir_shader::utils::affine_transform::AffineTransform;
-use restir_shader::visibility::scene::InstanceInfo;
+use restir_shader::visibility::scene::VisiInstanceInfo;
 use rust_gpu_bindless::descriptor::{BindlessImageUsage, BindlessInstance, DescriptorCounts, ImageDescExt};
 use rust_gpu_bindless::pipeline::{ColorAttachment, LoadOp, MutImageAccessExt, Present, StorageReadWrite};
 use rust_gpu_bindless::platform::ash::Debuggers;
@@ -149,11 +149,11 @@ pub async fn main_loop(event_loop: EventLoopExecutor, events: Receiver<Event<()>
 				AffineTransform::new(camera_controls.update(delta_time)),
 			);
 
-			let mut accum = CpuSceneAccum::new();
-			let mut add_model_at = |model: &CpuModel, at: Vec3| {
+			let mut accum = VisiCpuSceneAccum::new();
+			let mut add_model_at = |model: &VisiCpuModel, at: Vec3| {
 				accum.push(
 					&model,
-					InstanceInfo {
+					VisiInstanceInfo {
 						world_from_local: AffineTransform::new(Affine3A::from_translation(at)),
 					},
 				);

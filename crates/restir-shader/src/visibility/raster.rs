@@ -1,14 +1,14 @@
 use crate::visibility::id::{InstanceId, PackedGeometryId, TriangleId};
-use crate::visibility::scene::{Model, Scene};
+use crate::visibility::scene::{VisiModel, VisiScene};
 use glam::Vec4;
 use rust_gpu_bindless_macros::{BufferStruct, bindless};
 use rust_gpu_bindless_shaders::descriptor::{Buffer, Descriptors, TransientDesc};
 
 #[derive(Copy, Clone, BufferStruct)]
 pub struct Param<'a> {
-	pub scene: TransientDesc<'a, Buffer<Scene>>,
+	pub scene: TransientDesc<'a, Buffer<VisiScene>>,
 	/// model must be the same as `scene.load_instance(..., instance_index).model`
-	pub model: TransientDesc<'a, Buffer<Model>>,
+	pub model: TransientDesc<'a, Buffer<VisiModel>>,
 }
 
 #[bindless(vertex())]
@@ -27,9 +27,7 @@ pub fn visibility_vert(
 	let model = param.model.access(&descriptors).load();
 	let vertex = model.load_vertex(&descriptors, vertex_id);
 
-	let vtx_pos = scene
-		.camera
-		.transform_vertex(instance.world_from_local, vertex.position);
+	let vtx_pos = scene.camera.transform_vertex(instance.world_from_local, vertex.0);
 	*out_position = vtx_pos.clip_space;
 	*vtx_instance_id = instance_id;
 }

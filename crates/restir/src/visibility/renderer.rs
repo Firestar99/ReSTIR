@@ -1,6 +1,6 @@
 use crate::visibility::debug::VisiDebugPipeline;
 use crate::visibility::raster::VisiRasterPipeline;
-use crate::visibility::scene::CpuScene;
+use crate::visibility::scene::VisiCpuScene;
 use anyhow::anyhow;
 use glam::UVec4;
 use restir_shader::visibility::debug::DebugSettings;
@@ -106,7 +106,7 @@ impl VisiRendererResources {
 }
 
 pub struct VisiRenderInfo {
-	pub scene: CpuScene,
+	pub scene: VisiCpuScene,
 	pub debug_settings: DebugSettings,
 }
 

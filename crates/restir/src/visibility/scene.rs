@@ -1,25 +1,25 @@
-use crate::model::CpuModel;
+use crate::model::VisiCpuModel;
 use restir_shader::camera::Camera;
 use restir_shader::visibility::id::InstanceId;
-use restir_shader::visibility::scene::{Instance, InstanceInfo, Scene};
+use restir_shader::visibility::scene::{VisiInstance, VisiInstanceInfo, VisiScene};
 use rust_gpu_bindless::descriptor::{
 	Bindless, BindlessBufferCreateInfo, BindlessBufferUsage, Buffer, RCDesc, RCDescExt,
 };
 use std::collections::HashMap;
 
-pub struct CpuSceneAccum {
-	pub instances: HashMap<CpuModel, Vec<Instance>>,
+pub struct VisiCpuSceneAccum {
+	pub instances: HashMap<VisiCpuModel, Vec<VisiInstance>>,
 }
 
-impl CpuSceneAccum {
+impl VisiCpuSceneAccum {
 	pub fn new() -> Self {
 		Self {
 			instances: HashMap::new(),
 		}
 	}
 
-	pub fn push(&mut self, model: &CpuModel, instance: InstanceInfo) {
-		let instance = Instance {
+	pub fn push(&mut self, model: &VisiCpuModel, instance: VisiInstanceInfo) {
+		let instance = VisiInstance {
 			model: model.model.to_strong(),
 			info: instance,
 		};
@@ -29,7 +29,7 @@ impl CpuSceneAccum {
 			.push(instance);
 	}
 
-	pub fn finish(self, bindless: &Bindless, camera: Camera) -> anyhow::Result<CpuScene> {
+	pub fn finish(self, bindless: &Bindless, camera: Camera) -> anyhow::Result<VisiCpuScene> {
 		let mut instance_data = Vec::with_capacity(self.instances.iter().map(|(_, i)| i.len()).sum());
 		let draws = self
 			.instances
@@ -40,7 +40,7 @@ impl CpuSceneAccum {
 				// verify no oob in shaders later
 				InstanceId::new(instance_start + instance_count)?;
 				instance_data.extend(instances.into_iter());
-				Ok(CpuDraw {
+				Ok(VisiCpuDraw {
 					model,
 					instance_start,
 					instance_count,
@@ -63,13 +63,13 @@ impl CpuSceneAccum {
 				allocation_scheme: Default::default(),
 				name: "Scene",
 			},
-			Scene {
+			VisiScene {
 				instances: instance_buffer.to_strong(),
 				camera,
 			},
 		)?;
 
-		Ok(CpuScene {
+		Ok(VisiCpuScene {
 			camera,
 			draws,
 			instance_total_count,
@@ -78,15 +78,15 @@ impl CpuSceneAccum {
 	}
 }
 
-pub struct CpuScene {
-	pub draws: Vec<CpuDraw>,
+pub struct VisiCpuScene {
+	pub draws: Vec<VisiCpuDraw>,
 	pub instance_total_count: u32,
 	pub camera: Camera,
-	pub scene: RCDesc<Buffer<Scene>>,
+	pub scene: RCDesc<Buffer<VisiScene>>,
 }
 
-pub struct CpuDraw {
-	pub model: CpuModel,
+pub struct VisiCpuDraw {
+	pub model: VisiCpuModel,
 	pub instance_start: u32,
 	pub instance_count: u32,
 }

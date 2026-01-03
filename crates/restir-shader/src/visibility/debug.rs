@@ -1,6 +1,6 @@
 use crate::utils::view_range::DebugValueRange;
 use crate::visibility::id::PackedGeometryId;
-use crate::visibility::scene::Scene;
+use crate::visibility::scene::VisiScene;
 use glam::{UVec2, UVec3, UVec4, Vec3, Vec3Swizzles, Vec4};
 use num_enum::{FromPrimitive, IntoPrimitive};
 use rust_gpu_bindless_macros::{BufferStruct, bindless};
@@ -56,7 +56,7 @@ impl Default for DebugSettings {
 #[repr(C)]
 #[derive(Copy, Clone, BufferStruct)]
 pub struct Param<'a> {
-	pub scene: TransientDesc<'a, Buffer<Scene>>,
+	pub scene: TransientDesc<'a, Buffer<VisiScene>>,
 	pub packed_vertex_image: TransientDesc<'a, Image<Image2dU>>,
 	pub output_image: TransientDesc<'a, MutImage<Image2d>>,
 	pub debug_settings: DebugSettings,
