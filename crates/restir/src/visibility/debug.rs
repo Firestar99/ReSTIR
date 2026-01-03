@@ -34,7 +34,6 @@ impl VisiDebugPipeline {
 				scene: scene.scene.to_transient(cmd),
 				packed_vertex_image,
 				output_image,
-				instance_max: scene.instance_total_count,
 				debug_settings,
 			},
 		)?;

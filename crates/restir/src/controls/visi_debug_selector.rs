@@ -1,4 +1,4 @@
-use egui::Ui;
+use egui::{SliderClamping, Ui};
 use restir_shader::visibility::debug::{DebugSettings, DebugType};
 
 #[derive(Debug, Default)]
@@ -19,6 +19,7 @@ impl VisiDebugSettings {
 			} else {
 				self.s.debug_mix
 			},
+			view_range: self.s.view_range,
 		}
 	}
 
@@ -31,9 +32,26 @@ impl VisiDebugSettings {
 					ui.selectable_value(&mut self.s.debug_type, x, format!("{:?}", x));
 				}
 			});
+		let debug_enabled = self.s.debug_type != DebugType::None;
 		ui.add_enabled(
-			self.s.debug_type != DebugType::None,
+			debug_enabled,
 			egui::Slider::new(&mut self.s.debug_mix, 0. ..=1.).text("color mix"),
+		);
+		ui.add_enabled(
+			debug_enabled,
+			egui::Slider::new(&mut self.s.view_range.min, 0..=128)
+				.text("range min")
+				.clamping(SliderClamping::Never),
+		);
+		ui.add_enabled(
+			debug_enabled,
+			egui::Slider::new(&mut self.s.view_range.max, 0..=128)
+				.text("range max")
+				.clamping(SliderClamping::Never),
+		);
+		ui.add_enabled(
+			debug_enabled,
+			egui::Checkbox::new(&mut self.s.view_range.wrap, "Wrap values"),
 		);
 	}
 }

@@ -1,3 +1,4 @@
+use crate::utils::view_range::DebugValueRange;
 use crate::visibility::id::PackedGeometryId;
 use crate::visibility::scene::Scene;
 use glam::{UVec2, UVec3, UVec4, Vec3, Vec3Swizzles, Vec4};
@@ -35,10 +36,21 @@ unsafe impl BufferStructPlain for DebugType {
 }
 
 #[repr(C)]
-#[derive(Copy, Clone, Debug, Default, BufferStruct)]
+#[derive(Copy, Clone, Debug, BufferStruct)]
 pub struct DebugSettings {
 	pub debug_type: DebugType,
 	pub debug_mix: f32,
+	pub view_range: DebugValueRange,
+}
+
+impl Default for DebugSettings {
+	fn default() -> Self {
+		Self {
+			debug_type: DebugType::default(),
+			debug_mix: 1.0,
+			view_range: DebugValueRange::default(),
+		}
+	}
 }
 
 #[repr(C)]
@@ -47,7 +59,6 @@ pub struct Param<'a> {
 	pub scene: TransientDesc<'a, Buffer<Scene>>,
 	pub packed_vertex_image: TransientDesc<'a, Image<Image2dU>>,
 	pub output_image: TransientDesc<'a, MutImage<Image2d>>,
-	pub instance_max: u32,
 	pub debug_settings: DebugSettings,
 }
 
@@ -77,17 +88,16 @@ pub fn debug_visi_comp(
 			Vec4::ZERO
 		} else {
 			let geo = packed_geo.unpack();
-			let instance_id_color = || (geo.instance_id.to_u32() + 1) as f32 / (param.instance_max + 1) as f32;
-			let triangle_id_color = || {
-				let modulo = 12;
-				(geo.triangle_id.to_u32() % modulo) as f32 / modulo as f32
+			let view_range = param.debug_settings.view_range;
+			let instance_id_color = || view_range.clamp((geo.instance_id.to_u32() + 1) as f32);
+			let triangle_id_color = || view_range.clamp((geo.triangle_id.to_u32() + 1) as f32);
+			let color = match param.debug_settings.debug_type {
+				DebugType::None => Vec3::ZERO,
+				DebugType::ColorfulIds => Vec3::from((instance_id_color(), triangle_id_color(), 0.)),
+				DebugType::InstanceId => Vec3::from((instance_id_color(), 0., 0.)),
+				DebugType::TriangleId => Vec3::from((triangle_id_color(), 0., 0.)),
 			};
-			match param.debug_settings.debug_type {
-				DebugType::None => Vec4::ZERO,
-				DebugType::ColorfulIds => Vec4::new(instance_id_color(), triangle_id_color(), 0., 0.),
-				DebugType::InstanceId => Vec4::from((instance_id_color(), Vec3::ZERO)),
-				DebugType::TriangleId => Vec4::from((triangle_id_color(), Vec3::ZERO)),
-			}
+			Vec4::from((color, param.debug_settings.debug_mix))
 		};
 		unsafe {
 			param.output_image.access(&descriptors).write(pixel, out_color);
