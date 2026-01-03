@@ -64,6 +64,9 @@ pub async fn main_loop(event_loop: EventLoopExecutor, events: Receiver<Event<()>
 				instance_extensions: window_extensions,
 				extensions: &[ash::khr::swapchain::NAME],
 				debug: debugger(),
+				features: AshSingleGraphicsQueueCreateInfo::default()
+					.features
+					.tessellation_shader(true),
 				..AshSingleGraphicsQueueCreateInfo::default()
 			})?,
 			DescriptorCounts::REASONABLE_DEFAULTS,
