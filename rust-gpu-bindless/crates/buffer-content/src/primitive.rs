@@ -109,3 +109,15 @@ where
 		}
 	}
 }
+
+unsafe impl BufferStructPlain for bool {
+	type Transfer = u32;
+
+	unsafe fn write(self) -> Self::Transfer {
+		if self { 1 } else { 0 }
+	}
+
+	unsafe fn read(from: Self::Transfer) -> Self {
+		from != 0
+	}
+}
