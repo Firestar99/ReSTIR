@@ -1,8 +1,9 @@
 use crate::camera::Camera;
 use crate::utils::affine_transform::AffineTransform;
-use crate::visibility::id::{InstanceId, TriangleId};
+use crate::visibility::barycentric::BarycentricDeriv;
+use crate::visibility::id::{GeometryId, InstanceId, TriangleId};
 use core::ops::{Deref, DerefMut};
-use glam::Vec3;
+use glam::{UVec2, Vec3};
 use rust_gpu_bindless_macros::BufferStruct;
 use rust_gpu_bindless_shaders::descriptor::{Buffer, Descriptors, StrongDesc};
 
@@ -13,9 +14,46 @@ pub struct VisiScene {
 	pub camera: Camera,
 }
 
+#[repr(C)]
+#[derive(Copy, Clone, Debug)]
+pub struct VisiTriangle {
+	pub instance: VisiInstance,
+	pub model: VisiModel,
+	pub indices: VisiIndices,
+	pub vertices: [VisiVertex; 3],
+	pub barycentric: BarycentricDeriv,
+}
+
 impl VisiScene {
 	pub fn load_instance(&self, descriptors: &Descriptors, instance_id: InstanceId) -> VisiInstance {
 		self.instances.access(descriptors).load(instance_id.to_usize())
+	}
+
+	pub fn load_triangle(&self, descriptors: &Descriptors, pixel: UVec2, geo: GeometryId) -> VisiTriangle {
+		let instance = self.load_instance(descriptors, geo.instance_id);
+		let model = instance.model.access(descriptors).load();
+		let indices = model.load_indices(descriptors, geo.triangle_id);
+		let vertices = [
+			model.load_vertex(descriptors, indices[0]),
+			model.load_vertex(descriptors, indices[1]),
+			model.load_vertex(descriptors, indices[2]),
+		];
+		let clip_pos_fn = |i: usize| {
+			self.camera
+				.transform_vertex(instance.world_from_local, vertices[i].0)
+				.clip_space
+		};
+		let clip_pos = [clip_pos_fn(0), clip_pos_fn(1), clip_pos_fn(2)];
+		let viewport = self.camera.viewport_size.as_vec2();
+		let pixel_ndc = pixel.as_vec2() / viewport;
+		let barycentric = BarycentricDeriv::calculate_from(clip_pos[0], clip_pos[1], clip_pos[2], pixel_ndc, viewport);
+		VisiTriangle {
+			instance,
+			model,
+			indices,
+			vertices,
+			barycentric,
+		}
 	}
 }
 
@@ -71,22 +109,9 @@ impl DerefMut for VisiIndices {
 	}
 }
 
-#[repr(C)]
-#[derive(Copy, Clone, Debug)]
-pub struct VisiTriangle {
-	pub indices: VisiIndices,
-	pub vertices: [VisiVertex; 3],
-}
-
 impl VisiModel {
-	pub fn load_triangle(&self, descriptors: &Descriptors, triangle_id: TriangleId) -> VisiTriangle {
-		let indices = self.triangles.access(descriptors).load(triangle_id.to_usize());
-		let vertices = [
-			self.load_vertex(descriptors, indices[0]),
-			self.load_vertex(descriptors, indices[1]),
-			self.load_vertex(descriptors, indices[2]),
-		];
-		VisiTriangle { indices, vertices }
+	pub fn load_indices(&self, descriptors: &Descriptors, triangle_id: TriangleId) -> VisiIndices {
+		self.triangles.access(descriptors).load(triangle_id.to_usize())
 	}
 
 	pub fn load_vertex(&self, descriptors: &Descriptors, vertex_id: u32) -> VisiVertex {

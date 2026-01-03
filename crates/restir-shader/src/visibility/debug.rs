@@ -16,10 +16,11 @@ pub enum DebugType {
 	ColorfulIds,
 	InstanceId,
 	TriangleId,
+	Barycentrics,
 }
 
 impl DebugType {
-	pub const MAX_VALUE: DebugType = DebugType::TriangleId;
+	pub const MAX_VALUE: DebugType = DebugType::Barycentrics;
 	pub const LEN: u32 = Self::MAX_VALUE as u32 + 1;
 }
 
@@ -96,6 +97,10 @@ pub fn debug_visi_comp(
 				DebugType::ColorfulIds => Vec3::from((instance_id_color(), triangle_id_color(), 0.)),
 				DebugType::InstanceId => Vec3::from((instance_id_color(), 0., 0.)),
 				DebugType::TriangleId => Vec3::from((triangle_id_color(), 0., 0.)),
+				DebugType::Barycentrics => {
+					let tri = scene.load_triangle(&descriptors, pixel, geo);
+					tri.barycentric.lambda.0
+				}
 			};
 			Vec4::from((color, param.debug_settings.debug_mix))
 		};
