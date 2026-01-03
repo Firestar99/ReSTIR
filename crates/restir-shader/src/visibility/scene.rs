@@ -45,7 +45,7 @@ impl VisiScene {
 		};
 		let clip_pos = [clip_pos_fn(0), clip_pos_fn(1), clip_pos_fn(2)];
 		let viewport = self.camera.viewport_size.as_vec2();
-		let pixel_ndc = pixel.as_vec2() / viewport;
+		let pixel_ndc = pixel.as_vec2() / viewport * 2. - 1.;
 		let barycentric = BarycentricDeriv::calculate_from(clip_pos[0], clip_pos[1], clip_pos[2], pixel_ndc, viewport);
 		VisiTriangle {
 			instance,
