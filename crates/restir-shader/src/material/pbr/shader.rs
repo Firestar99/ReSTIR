@@ -26,7 +26,7 @@ fn pbr_eval(
 	tri: VisiTriangle,
 ) -> Vec4 {
 	let descriptors = &*descriptors;
-	let model = unsafe { tri.model.dyn_material.transmute_buffer::<PbrModel>() };
+	let model = unsafe { tri.model.dyn_material_model.transmute_buffer::<PbrModel>() };
 	let model = model.access(descriptors).load();
 
 	let vtx_tri = model.load_vertices(descriptors, tri.indices);

@@ -17,6 +17,7 @@ impl VisiCpuModel {
 		bindless: &Bindless,
 		vertices: impl ExactSizeIterator<Item = VisiVertex>,
 		indices: impl ExactSizeIterator<Item = VisiIndices>,
+		dyn_material_model: &RCDesc,
 	) -> anyhow::Result<Self> {
 		let triangles = bindless.buffer().alloc_shared_from_iter(
 			&BindlessBufferCreateInfo {
@@ -47,6 +48,7 @@ impl VisiCpuModel {
 			VisiModel {
 				triangles: triangles.to_strong(),
 				vertices: vertices.to_strong(),
+				dyn_material_model,
 			},
 		)?;
 

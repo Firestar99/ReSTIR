@@ -13,7 +13,7 @@ pub struct VisiModel {
 	pub vertices: StrongDesc<Buffer<[VisiVertex]>>,
 	/// A reference to a buffer containing material information. The type contained within the buffer is unknown, and
 	/// the material evaluation shader is expected to transmute the type to the one it expects.
-	pub dyn_material: StrongDesc<Buffer<()>>,
+	pub dyn_material_model: StrongDesc<Buffer<()>>,
 }
 
 #[repr(C)]
