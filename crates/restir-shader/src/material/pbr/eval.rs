@@ -4,7 +4,7 @@ use crate::material::pbr::model::PbrMaterial;
 use core::f32::consts::PI;
 use core::ops::{Deref, DerefMut};
 use glam::{Mat3, Vec3, Vec4, Vec4Swizzles};
-use rust_gpu_bindless_shaders::descriptor::{AliveDescRef, Desc, Image, Image2d};
+use rust_gpu_bindless_shaders::descriptor::{AliveDescRef, Desc, Descriptors, Image, Image2d};
 #[cfg(target_arch = "spirv")]
 use spirv_std::num_traits::Float;
 
@@ -66,11 +66,11 @@ pub struct SampledMaterial {
 impl<R: AliveDescRef> PbrMaterial<R> {
 	/// Sample the material's textures at some texture coordinates.
 	/// The sampled values can then be reused for multiple light evaluations.
-	pub fn sample<F>(&self, loc: SurfaceLocation, mut sample_fn: F) -> SampledMaterial
+	pub fn sample<F>(&self, descriptors: &Descriptors, loc: SurfaceLocation, mut sample_fn: F) -> SampledMaterial
 	where
-		F: FnMut(&Desc<R, Image<Image2d>>) -> Vec4,
+		F: FnMut(&Desc<R, Image<Image2d>>, &Descriptors) -> Vec4,
 	{
-		let base_color: Vec4 = sample_fn(&self.base_color) * Vec4::from(self.base_color_factor);
+		let base_color: Vec4 = sample_fn(&self.base_color, descriptors) * Vec4::from(self.base_color_factor);
 		let albedo = base_color.xyz();
 		let alpha = base_color.w;
 
@@ -80,13 +80,13 @@ impl<R: AliveDescRef> PbrMaterial<R> {
 			let bi_tangent = tangent.w * Vec3::cross(normal, tangent.xyz());
 			let tbn = Mat3::from_cols(tangent.xyz(), bi_tangent, normal);
 			// normal in tangent space
-			let normal_ts: Vec4 = sample_fn(&self.normal);
+			let normal_ts: Vec4 = sample_fn(&self.normal, descriptors);
 			let normal_ts = normal_ts.xy() * 2.0 - 1.0;
 			let normal_ts = Vec3::from((normal_ts, 1. - normal_ts.length()));
 			Vec3::normalize(tbn * normal_ts)
 		};
 
-		let orm: Vec4 = sample_fn(&self.occlusion_roughness_metallic);
+		let orm: Vec4 = sample_fn(&self.occlusion_roughness_metallic, descriptors);
 		// let ao = orm.x * pbr_material.occlusion_strength;
 		let roughness = orm.y * self.roughness_factor;
 		let metallic = orm.z * self.metallic_factor;

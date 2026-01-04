@@ -41,7 +41,7 @@ fn pbr_eval(
 		vtx.normal,
 		vtx.tangent,
 	);
-	let sampled_material = model.material.sample(loc, |image| {
+	let sampled_material = model.material.sample(descriptors, loc, |image, descriptors| {
 		image
 			.access(descriptors)
 			.sample_with(sampler, vtx.tex_coord, grad(vtx_ddx.tex_coord, vtx_ddy.tex_coord))
