@@ -80,7 +80,20 @@ impl BarycentricDeriv {
 }
 
 impl Barycentric {
-	pub fn interpolate<V: Copy + Mul<f32, Output = V> + Add<V, Output = V>>(&self, attr: [V; 3]) -> V {
-		attr[0] * self.x + attr[1] * self.y + attr[2] * self.z
+	pub fn interpolate<V: BarycentricInterpolatable>(&self, attr: [V; 3]) -> V {
+		V::interpolate(*self, attr)
+	}
+}
+
+pub trait BarycentricInterpolatable: Sized {
+	fn interpolate(bary: Barycentric, attr: [Self; 3]) -> Self;
+}
+
+impl<V> BarycentricInterpolatable for V
+where
+	V: Copy + Mul<f32, Output = V> + Add<V, Output = V>,
+{
+	fn interpolate(bary: Barycentric, attr: [Self; 3]) -> Self {
+		attr[0] * bary.x + attr[1] * bary.y + attr[2] * bary.z
 	}
 }

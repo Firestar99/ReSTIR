@@ -7,8 +7,13 @@ use rust_gpu_bindless_shaders::descriptor::{Buffer, Descriptors, StrongDesc};
 #[repr(C)]
 #[derive(Copy, Clone, Debug, BufferStruct)]
 pub struct VisiModel {
+	/// The triangles of this model
 	pub triangles: StrongDesc<Buffer<[VisiIndices]>>,
+	/// The vertices of this model
 	pub vertices: StrongDesc<Buffer<[VisiVertex]>>,
+	/// A reference to a buffer containing material information. The type contained within the buffer is unknown, and
+	/// the material evaluation shader is expected to transmute the type to the one it expects.
+	pub dyn_material: StrongDesc<Buffer<()>>,
 }
 
 #[repr(C)]
