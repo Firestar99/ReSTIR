@@ -1,7 +1,7 @@
 use crate::buffer_content::{BufferContent, BufferStruct, Metadata};
 use crate::descriptor::descriptor_content::DescContent;
+use crate::descriptor::{Desc, DescRef};
 use core::marker::PhantomData;
-use core::mem;
 use rust_gpu_bindless_buffer_content::BufferStructPlain;
 use spirv_std::ByteAddressableBuffer;
 
@@ -10,6 +10,20 @@ pub struct Buffer<T: BufferContent + ?Sized> {
 }
 
 impl<T: BufferContent + ?Sized> DescContent for Buffer<T> {}
+
+impl<R: DescRef, T: BufferContent + ?Sized> Desc<R, Buffer<T>> {
+	/// Transmute the contents of the buffer.
+	///
+	/// WARNING: Has weird implications on the `.len()` returned by slices! On the CPU, the len will remain the same or
+	/// be 1 for sized types (e.g. not slices). On the GPU, len will dynamically readjust, as it is recalculated from
+	/// the size for every query.
+	///
+	/// # Safety
+	/// Effectively the same as [`core::mem::transmute`]-ing `&T` to `&D`
+	pub unsafe fn transmute_buffer<D: BufferContent + ?Sized>(self) -> Desc<R, Buffer<D>> {
+		unsafe { Desc::new_inner(self.r) }
+	}
+}
 
 pub struct MutBuffer<T: BufferContent + ?Sized> {
 	_phantom: PhantomData<T>,
@@ -99,7 +113,7 @@ impl<T: BufferStructPlain> MutBufferSlice<'_, T> {
 impl<T: BufferStruct> BufferSlice<'_, [T]> {
 	/// The len of the buffer. The len calculation contains a potentially expensive division.
 	pub fn len(&self) -> usize {
-		self.buffer.data.len() * 4 / mem::size_of::<T::Transfer>()
+		self.buffer.data.len() * 4 / size_of::<T::Transfer>()
 	}
 
 	/// The len of the buffer. The len calculation contains a potentially expensive division.
@@ -109,7 +123,7 @@ impl<T: BufferStruct> BufferSlice<'_, [T]> {
 
 	/// Loads a T at an `index` offset from the buffer.
 	pub fn load(&self, index: usize) -> T {
-		let byte_offset = index * mem::size_of::<T::Transfer>();
+		let byte_offset = index * size_of::<T::Transfer>();
 		unsafe { T::read(self.buffer.load(byte_offset as u32), self.meta) }
 	}
 
@@ -118,7 +132,7 @@ impl<T: BufferStruct> BufferSlice<'_, [T]> {
 	/// # Safety
 	/// `byte_index` must be in bounds of the buffer
 	pub unsafe fn load_unchecked(&self, index: usize) -> T {
-		let byte_offset = index * mem::size_of::<T::Transfer>();
+		let byte_offset = index * size_of::<T::Transfer>();
 		unsafe { T::read(self.buffer.load_unchecked(byte_offset as u32), self.meta) }
 	}
 }
@@ -156,7 +170,7 @@ impl<T: BufferStructPlain> MutBufferSlice<'_, [T]> {
 	/// Loading data written by another thread or invocation without a memory barrier in between is UB.
 	pub unsafe fn store(&mut self, index: usize, t: T) {
 		unsafe {
-			let byte_offset = index * mem::size_of::<T::Transfer>();
+			let byte_offset = index * size_of::<T::Transfer>();
 			self.buffer.store(byte_offset as u32, T::write(t));
 		}
 	}
@@ -169,7 +183,7 @@ impl<T: BufferStructPlain> MutBufferSlice<'_, [T]> {
 	/// `byte_index` must be in bounds of the buffer.
 	pub unsafe fn store_unchecked(&mut self, index: usize, t: T) {
 		unsafe {
-			let byte_offset = index * mem::size_of::<T::Transfer>();
+			let byte_offset = index * size_of::<T::Transfer>();
 			self.buffer.store_unchecked(byte_offset as u32, T::write(t));
 		}
 	}
