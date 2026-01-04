@@ -34,7 +34,6 @@ fn pbr_eval(
 	let vtx_ddx = tri.barycentric.ddx.interpolate(vtx_tri);
 	let vtx_ddy = tri.barycentric.ddy.interpolate(vtx_tri);
 
-	let sampler = param.sampler.access(descriptors);
 	let loc = SurfaceLocation::new(
 		tri.frag_coord.world_space,
 		scene.camera.view_from_world.translation(),
@@ -42,6 +41,7 @@ fn pbr_eval(
 		vtx.tangent,
 	);
 	let sampled_material = model.material.sample(descriptors, loc, |image, descriptors| {
+		let sampler = param.sampler.access(descriptors);
 		image
 			.access(descriptors)
 			.sample_with(sampler, vtx.tex_coord, grad(vtx_ddx.tex_coord, vtx_ddy.tex_coord))
