@@ -17,6 +17,8 @@ pub struct VisiScene {
 #[repr(C)]
 #[derive(Copy, Clone, Debug)]
 pub struct VisiTriangle {
+	pub pixel: UVec2,
+	pub geo: GeometryId,
 	pub instance: VisiInstance,
 	pub model: VisiModel,
 	pub indices: VisiIndices,
@@ -48,6 +50,8 @@ impl VisiScene {
 		let pixel_ndc = pixel.as_vec2() / viewport * 2. - 1.;
 		let barycentric = BarycentricDeriv::calculate_from(clip_pos[0], clip_pos[1], clip_pos[2], pixel_ndc, viewport);
 		VisiTriangle {
+			pixel,
+			geo,
 			instance,
 			model,
 			indices,

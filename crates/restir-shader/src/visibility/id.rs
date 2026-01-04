@@ -108,10 +108,11 @@ impl InstanceId {
 }
 
 #[repr(C)]
-#[derive(Copy, Clone, Debug, Hash, Eq, PartialEq, BufferStructPlain)]
+#[derive(Copy, Clone, Debug, Hash, Eq, PartialEq)]
 pub struct GeometryId {
 	pub instance_id: InstanceId,
 	pub triangle_id: TriangleId,
+	pub is_clear: bool,
 }
 
 impl GeometryId {
@@ -139,6 +140,7 @@ impl PackedGeometryId {
 		GeometryId {
 			instance_id: InstanceId((self.0 >> INSTANCE_SHIFT) & INSTANCE_MASK),
 			triangle_id: TriangleId((self.0 >> TRIANGLE_SHIFT) & TRIANGLE_MASK),
+			is_clear: self.is_clear(),
 		}
 	}
 

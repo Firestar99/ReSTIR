@@ -1,5 +1,5 @@
 use egui::{SliderClamping, Ui};
-use restir_shader::visibility::debug::{DebugSettings, DebugType};
+use restir_shader::material::debug::{DebugSettings, DebugType};
 
 #[derive(Debug, Default)]
 pub struct VisiDebugSettings {
