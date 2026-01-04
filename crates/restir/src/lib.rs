@@ -11,5 +11,5 @@ pub mod visibility;
 pub fn debugger() -> Debuggers {
 	// Validation layer does not yet support timelime semaphores properly, leading to many false positives.
 	// On Linux RADV gpu assisted validation even segfaulting on graphics pipeline creation.
-	Debuggers::Validation
+	Debuggers::None
 }
