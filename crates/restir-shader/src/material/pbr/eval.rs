@@ -1,4 +1,4 @@
-use crate::material::light::analytical::{DirectionalLight, PointLight};
+use crate::material::light::analytical::{AmbientLight, AnalyticalLightMaterialEval, DirectionalLight, PointLight};
 use crate::material::light::radiance::Radiance;
 use crate::material::pbr::model::PbrMaterial;
 use core::f32::consts::PI;
@@ -6,6 +6,8 @@ use core::ops::{Deref, DerefMut};
 use glam::{Mat3, Vec2, Vec3, Vec4, Vec4Swizzles};
 use rust_gpu_bindless_shaders::descriptor::{AliveDescRef, Descriptors};
 use spirv_std::Sampler;
+#[cfg(target_arch = "spirv")]
+use spirv_std::num_traits::Float;
 
 /// camera direction unit vector, relative to fragment position
 #[derive(Copy, Clone)]
@@ -110,14 +112,14 @@ impl<R: AliveDescRef> PbrMaterialSample for PbrMaterial<R> {
 	}
 }
 
-impl SampledMaterial {
-	pub fn evaluate_directional_light(&self, light: DirectionalLight) -> Radiance {
+impl AnalyticalLightMaterialEval for SampledMaterial {
+	fn eval_directional(&self, light: DirectionalLight) -> Radiance {
 		let l = light.direction;
 		let radiance = light.color;
 		self.evaluate_light(l, radiance)
 	}
 
-	pub fn evaluate_point_light(&self, light: PointLight) -> Radiance {
+	fn eval_point(&self, light: PointLight) -> Radiance {
 		let light_rel = light.position - self.world_pos;
 		let l = light_rel.normalize();
 		let distance = light_rel.length();
@@ -126,6 +128,12 @@ impl SampledMaterial {
 		self.evaluate_light(l, radiance)
 	}
 
+	fn eval_ambient(&self, radiance: AmbientLight) -> Radiance {
+		Radiance(self.albedo * radiance.color.0)
+	}
+}
+
+impl SampledMaterial {
 	/// Evaluate the light contribution a light has, not considering visibility.
 	///
 	/// * `l`: light direction unit vector, relative to fragment position
@@ -153,10 +161,6 @@ impl SampledMaterial {
 
 		let n_dot_l = Vec3::dot(n, l).max(0.0);
 		Radiance((k_diffuse * albedo / PI + specular) * radiance.0 * n_dot_l)
-	}
-
-	pub fn ambient_light(&self, radiance: Radiance) -> Radiance {
-		Radiance(self.albedo * radiance.0)
 	}
 }
 
