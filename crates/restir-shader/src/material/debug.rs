@@ -1,6 +1,6 @@
 use crate::material_shader;
 use crate::utils::view_range::DebugValueRange;
-use crate::visibility::scene::VisiTriangle;
+use crate::visibility::scene::{VisiScene, VisiTriangle};
 use glam::{Vec3, Vec4};
 use num_enum::{FromPrimitive, IntoPrimitive};
 use rust_gpu_bindless_macros::BufferStruct;
@@ -55,7 +55,7 @@ impl Default for DebugSettings {
 
 material_shader!(debug_material, DebugSettings, pbr_eval);
 
-fn pbr_eval(debug_settings: &DebugSettings, _: &mut Descriptors<'_>, tri: VisiTriangle) -> Vec4 {
+fn pbr_eval(debug_settings: &DebugSettings, _: &mut Descriptors<'_>, _: VisiScene, tri: VisiTriangle) -> Vec4 {
 	let geo = tri.geo;
 	if geo.is_clear {
 		Vec4::ZERO

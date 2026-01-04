@@ -1,13 +1,16 @@
-use crate::visibility::scene::VisiTriangle;
+use crate::visibility::scene::{VisiScene, VisiTriangle};
 use glam::Vec4;
 use rust_gpu_bindless_shaders::buffer_content::BufferStruct;
 use rust_gpu_bindless_shaders::descriptor::Descriptors;
 
 pub mod image_shader;
 
-pub trait MaterialEvalFn<T: BufferStruct>: FnOnce(&T, &mut Descriptors<'_>, VisiTriangle) -> Vec4 {}
+pub trait MaterialEvalFn<T: BufferStruct>: FnOnce(&T, &mut Descriptors<'_>, VisiScene, VisiTriangle) -> Vec4 {}
 
-impl<T: BufferStruct, I> MaterialEvalFn<T> for I where I: FnOnce(&T, &mut Descriptors<'_>, VisiTriangle) -> Vec4 {}
+impl<T: BufferStruct, I> MaterialEvalFn<T> for I where
+	I: FnOnce(&T, &mut Descriptors<'_>, VisiScene, VisiTriangle) -> Vec4
+{
+}
 
 #[macro_export]
 macro_rules! material_shader {
