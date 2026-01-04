@@ -51,7 +51,7 @@ impl VisiCpuModel {
 		)?;
 
 		// transmute `[TriangleIndices]` -> `[u32]`
-		let indices = unsafe { RCDesc::new_inner(triangles.r) };
+		let indices = unsafe { triangles.transmute_buffer() };
 		const_assert_eq!(3, size_of::<VisiIndices>() / size_of::<u32>());
 		let indices_count = indices.len() as u32 * 3;
 		Ok(Self {
