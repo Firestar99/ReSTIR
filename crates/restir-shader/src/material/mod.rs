@@ -4,7 +4,8 @@ use rust_gpu_bindless_shaders::buffer_content::{BufferContent, BufferStruct};
 use rust_gpu_bindless_shaders::descriptor::{Buffer, Descriptors, StrongDesc};
 
 pub mod debug;
-
+pub mod light;
+pub mod pbr;
 pub mod image_shader;
 
 pub struct MaterialEvalParam<'a, T: BufferStruct, M: BufferContent + ?Sized> {
