@@ -14,6 +14,7 @@ use static_assertions::const_assert_eq;
 pub struct Param<'a, T: BufferStruct> {
 	pub scene: TransientDesc<'a, Buffer<VisiScene>>,
 	pub packed_vertex_image: TransientDesc<'a, Image<Image2dU>>,
+	pub depth_image: TransientDesc<'a, Image<Image2d>>,
 	pub output_image: TransientDesc<'a, MutImage<Image2d>>,
 	pub inner: T,
 }
@@ -32,7 +33,7 @@ pub fn material_shader_image_eval<T: BufferStruct, F: MaterialEvalFn<T>>(
 	if pixel_inbounds {
 		let packed_geo: UVec4 = param.packed_vertex_image.access(&*descriptors).fetch_with_lod(pixel, 0);
 		let geo = PackedGeometryId::from_u32(packed_geo.x).unpack();
-		let tri = scene.load_triangle(&*descriptors, pixel, geo);
+		let tri = scene.load_triangle(&*descriptors, param.depth_image, pixel, geo);
 		let out_color = eval(&param.inner, &mut *descriptors, scene, tri);
 		unsafe {
 			param.output_image.access(&*descriptors).write(pixel, out_color);

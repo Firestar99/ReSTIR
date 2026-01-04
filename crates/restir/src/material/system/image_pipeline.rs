@@ -25,6 +25,7 @@ impl<T: BufferStruct> MaterialImagePipeline<T> {
 		cmd: &mut Recording,
 		scene: VisiCpuScene,
 		packed_vertex_image: TransientDesc<Image<Image2dU>>,
+		depth_image: TransientDesc<Image<Image2d>>,
 		output_image: TransientDesc<MutImage<Image2d>>,
 		param: T,
 	) -> anyhow::Result<()> {
@@ -39,6 +40,7 @@ impl<T: BufferStruct> MaterialImagePipeline<T> {
 			Param {
 				scene: scene.scene.to_transient(cmd),
 				packed_vertex_image,
+				depth_image,
 				output_image,
 				inner: param,
 			},

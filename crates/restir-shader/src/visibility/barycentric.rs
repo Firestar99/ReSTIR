@@ -1,5 +1,5 @@
 use core::ops::{Add, Deref, DerefMut, Mul};
-use glam::{Mat2, Vec2, Vec3, Vec4, Vec4Swizzles, vec3};
+use glam::{Mat2, UVec2, Vec2, Vec3, Vec4, Vec4Swizzles, vec3};
 use rust_gpu_bindless_macros::BufferStructPlain;
 
 /// The barycentrics and the derivatives of a Triangle at a certain pixel on the screen
@@ -32,7 +32,9 @@ impl DerefMut for Barycentric {
 }
 
 impl BarycentricDeriv {
-	pub fn calculate_from(pt0: Vec4, pt1: Vec4, pt2: Vec4, pixel_ndc: Vec2, viewport_size: Vec2) -> Self {
+	pub fn calculate_from(pt0: Vec4, pt1: Vec4, pt2: Vec4, pixel: UVec2, viewport_size: Vec2) -> Self {
+		// I added this coordiante system conversion
+		let pixel_ndc = pixel.as_vec2() / viewport_size * 2. - 1.;
 		let inv_w = Vec3::recip(vec3(pt0.w, pt1.w, pt2.w));
 
 		let ndc0 = pt0.xy() * inv_w.x;
@@ -78,7 +80,20 @@ impl BarycentricDeriv {
 }
 
 impl Barycentric {
-	pub fn interpolate<V: Copy + Mul<f32, Output = V> + Add<V, Output = V>>(&self, attr: [V; 3]) -> V {
-		attr[0] * self.x + attr[1] * self.y + attr[2] * self.z
+	pub fn interpolate<V: BarycentricInterpolatable>(&self, attr: [V; 3]) -> V {
+		V::interpolate(*self, attr)
+	}
+}
+
+pub trait BarycentricInterpolatable: Sized {
+	fn interpolate(bary: Barycentric, attr: [Self; 3]) -> Self;
+}
+
+impl<V> BarycentricInterpolatable for V
+where
+	V: Copy + Mul<f32, Output = V> + Add<V, Output = V>,
+{
+	fn interpolate(bary: Barycentric, attr: [Self; 3]) -> Self {
+		attr[0] * bary.x + attr[1] * bary.y + attr[2] * bary.z
 	}
 }
