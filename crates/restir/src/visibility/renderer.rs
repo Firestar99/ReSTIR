@@ -91,7 +91,7 @@ impl VisiRendererResources {
 			mip_levels: 1,
 			array_layers: 1,
 			samples: Default::default(),
-			usage: BindlessImageUsage::DEPTH_STENCIL_ATTACHMENT,
+			usage: BindlessImageUsage::DEPTH_STENCIL_ATTACHMENT | BindlessImageUsage::SAMPLED,
 			allocation_scheme: BindlessAllocationScheme::Dedicated,
 			name: "depth",
 			..BindlessImageCreateInfo::default()
@@ -163,7 +163,7 @@ impl VisiRenderer {
 					clear_stencil: 0,
 				},
 				load_op: LoadOp::Clear,
-				store_op: StoreOp::DontCare,
+				store_op: StoreOp::Store,
 			}),
 			|rp| {
 				let scene_buffer = info.scene.scene.to_transient(rp);
@@ -175,10 +175,12 @@ impl VisiRenderer {
 		)?;
 
 		let packed_vertex_image = packed_vertex_image.transition::<SampledRead>()?;
+		let depth = depth.transition::<SampledRead>()?;
 		self.pipeline.debug_pipeline.image.dispatch(
 			cmd,
 			info.scene,
 			packed_vertex_image.to_transient_sampled()?,
+			depth.to_transient_sampled()?,
 			output_image.to_mut_transient(),
 			info.debug_settings,
 		)?;
