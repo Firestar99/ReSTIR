@@ -33,7 +33,7 @@ pub fn material_shader_image_eval<T: BufferStruct, F: MaterialEvalFn<T>>(
 		let packed_geo: UVec4 = param.packed_vertex_image.access(&*descriptors).fetch_with_lod(pixel, 0);
 		let geo = PackedGeometryId::from_u32(packed_geo.x).unpack();
 		let tri = scene.load_triangle(&*descriptors, pixel, geo);
-		let out_color = eval(&param.inner, &mut *descriptors, tri);
+		let out_color = eval(&param.inner, &mut *descriptors, scene, tri);
 		unsafe {
 			param.output_image.access(&*descriptors).write(pixel, out_color);
 		}
