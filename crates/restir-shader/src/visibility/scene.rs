@@ -1,9 +1,10 @@
 use crate::camera::Camera;
 use crate::utils::affine_transform::AffineTransform;
 use crate::visibility::barycentric::BarycentricDeriv;
-use crate::visibility::id::{GeometryId, InstanceId, TriangleId};
+use crate::visibility::id::{GeometryId, InstanceId};
+use crate::visibility::model::{VisiIndices, VisiModel, VisiVertex};
 use core::ops::{Deref, DerefMut};
-use glam::{UVec2, Vec3};
+use glam::UVec2;
 use rust_gpu_bindless_macros::BufferStruct;
 use rust_gpu_bindless_shaders::descriptor::{Buffer, Descriptors, StrongDesc};
 
@@ -12,6 +13,33 @@ use rust_gpu_bindless_shaders::descriptor::{Buffer, Descriptors, StrongDesc};
 pub struct VisiScene {
 	pub instances: StrongDesc<Buffer<[VisiInstance]>>,
 	pub camera: Camera,
+}
+
+#[repr(C)]
+#[derive(Copy, Clone, Debug, BufferStruct)]
+pub struct VisiInstance {
+	pub model: StrongDesc<Buffer<VisiModel>>,
+	pub info: VisiInstanceInfo,
+}
+
+impl Deref for VisiInstance {
+	type Target = VisiInstanceInfo;
+
+	fn deref(&self) -> &Self::Target {
+		&self.info
+	}
+}
+
+impl DerefMut for VisiInstance {
+	fn deref_mut(&mut self) -> &mut Self::Target {
+		&mut self.info
+	}
+}
+
+#[repr(C)]
+#[derive(Copy, Clone, Debug, BufferStruct)]
+pub struct VisiInstanceInfo {
+	pub world_from_local: AffineTransform,
 }
 
 #[repr(C)]
@@ -60,69 +88,3 @@ impl VisiScene {
 		}
 	}
 }
-
-#[repr(C)]
-#[derive(Copy, Clone, Debug, BufferStruct)]
-pub struct VisiInstance {
-	pub model: StrongDesc<Buffer<VisiModel>>,
-	pub info: VisiInstanceInfo,
-}
-
-impl Deref for VisiInstance {
-	type Target = VisiInstanceInfo;
-
-	fn deref(&self) -> &Self::Target {
-		&self.info
-	}
-}
-
-impl DerefMut for VisiInstance {
-	fn deref_mut(&mut self) -> &mut Self::Target {
-		&mut self.info
-	}
-}
-
-#[repr(C)]
-#[derive(Copy, Clone, Debug, BufferStruct)]
-pub struct VisiInstanceInfo {
-	pub world_from_local: AffineTransform,
-}
-
-#[repr(C)]
-#[derive(Copy, Clone, Debug, BufferStruct)]
-pub struct VisiModel {
-	pub triangles: StrongDesc<Buffer<[VisiIndices]>>,
-	pub vertices: StrongDesc<Buffer<[VisiVertex]>>,
-}
-
-#[repr(C)]
-#[derive(Copy, Clone, Debug, BufferStruct)]
-pub struct VisiIndices(pub [u32; 3]);
-
-impl Deref for VisiIndices {
-	type Target = [u32; 3];
-
-	fn deref(&self) -> &Self::Target {
-		&self.0
-	}
-}
-
-impl DerefMut for VisiIndices {
-	fn deref_mut(&mut self) -> &mut Self::Target {
-		&mut self.0
-	}
-}
-
-impl VisiModel {
-	pub fn load_indices(&self, descriptors: &Descriptors, triangle_id: TriangleId) -> VisiIndices {
-		self.triangles.access(descriptors).load(triangle_id.to_usize())
-	}
-
-	pub fn load_vertex(&self, descriptors: &Descriptors, vertex_id: u32) -> VisiVertex {
-		self.vertices.access(descriptors).load(vertex_id as usize)
-	}
-}
-
-#[repr(C)]
-#[derive(Copy, Clone, Debug, BufferStruct)]
-pub struct VisiVertex(pub Vec3);

@@ -1,6 +1,6 @@
 use crate::model::VisiCpuModel;
 use glam::{Affine3A, Vec3};
-use restir_shader::visibility::scene::{VisiIndices, VisiVertex};
+use restir_shader::visibility::model::{VisiIndices, VisiVertex};
 use rust_gpu_bindless::descriptor::Bindless;
 
 pub fn cube(bindless: &Bindless, transform: Affine3A) -> anyhow::Result<VisiCpuModel> {

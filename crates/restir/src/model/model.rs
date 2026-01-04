@@ -1,4 +1,4 @@
-use restir_shader::visibility::scene::{VisiIndices, VisiModel, VisiVertex};
+use restir_shader::visibility::model::{VisiIndices, VisiModel, VisiVertex};
 use rust_gpu_bindless::__private::static_assertions::const_assert_eq;
 use rust_gpu_bindless::descriptor::{
 	Bindless, BindlessBufferCreateInfo, BindlessBufferUsage, Buffer, DescBufferLenExt, RCDesc, RCDescExt,

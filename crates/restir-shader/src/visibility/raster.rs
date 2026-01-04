@@ -1,5 +1,6 @@
 use crate::visibility::id::{InstanceId, PackedGeometryId, TriangleId};
-use crate::visibility::scene::{VisiModel, VisiScene};
+use crate::visibility::model::VisiModel;
+use crate::visibility::scene::VisiScene;
 use glam::Vec4;
 use rust_gpu_bindless_macros::{BufferStruct, bindless};
 use rust_gpu_bindless_shaders::descriptor::{Buffer, Descriptors, TransientDesc};
