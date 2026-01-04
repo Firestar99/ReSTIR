@@ -6,6 +6,9 @@ use rust_gpu_bindless_macros::BufferStruct;
 pub struct Radiance(pub Vec3);
 
 impl Radiance {
+	pub const ZERO: Self = Self(Vec3::ZERO);
+	pub const ONE: Self = Self(Vec3::ONE);
+
 	pub fn tone_map_reinhard(&self) -> Vec3 {
 		self.0 / (self.0 + Vec3::splat(1.0))
 	}
