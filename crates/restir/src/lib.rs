@@ -2,6 +2,7 @@ use rust_gpu_bindless::platform::ash::Debuggers;
 
 pub mod controls;
 pub mod main_loop;
+pub mod material;
 pub mod model;
 pub mod shader;
 pub mod visibility;

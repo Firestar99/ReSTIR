@@ -1,9 +1,9 @@
-use crate::visibility::debug::VisiDebugPipeline;
+use crate::material::debug::VisiDebugPipeline;
 use crate::visibility::raster::VisiRasterPipeline;
 use crate::visibility::scene::VisiCpuScene;
 use anyhow::anyhow;
 use glam::UVec4;
-use restir_shader::visibility::debug::DebugSettings;
+use restir_shader::material::debug::DebugSettings;
 use rust_gpu_bindless::descriptor::{
 	Bindless, BindlessAllocationScheme, BindlessImageCreateInfo, BindlessImageUsage, Extent, Format, Image2d, Image2dU,
 	ImageDescExt, MutDesc, MutImage, RCDescExt,
@@ -175,12 +175,12 @@ impl VisiRenderer {
 		)?;
 
 		let packed_vertex_image = packed_vertex_image.transition::<SampledRead>()?;
-		self.pipeline.debug_pipeline.dispatch(
+		self.pipeline.debug_pipeline.image.dispatch(
 			cmd,
 			info.scene,
-			info.debug_settings,
 			packed_vertex_image.to_transient_sampled()?,
 			output_image.to_mut_transient(),
+			info.debug_settings,
 		)?;
 
 		self.resources = Some(VisiRendererResources {

@@ -2028,6 +2028,7 @@ dependencies = [
  "rust-gpu-bindless",
  "rust-gpu-bindless-egui",
  "rust-gpu-bindless-shader-builder",
+ "rust-gpu-bindless-shaders",
  "rust-gpu-bindless-winit",
  "smallvec",
  "winit",
