@@ -239,9 +239,7 @@ impl<'a: 'b, 'b, P: BindlessPipelinePlatform> Rendering<'a, 'b, P> {
 	) -> Result<(), RecordingError<P>> {
 		unsafe {
 			index_buffer.has_required_usage(BindlessBufferUsage::INDEX_BUFFER)?;
-			self.platform
-				.draw_indexed(pipeline, index_buffer, count, param)
-				.map_err(Into::<RecordingError<P>>::into)
+			self.platform.draw_indexed(pipeline, index_buffer, count, param)
 		}
 	}
 

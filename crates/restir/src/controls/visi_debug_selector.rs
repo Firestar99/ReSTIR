@@ -28,7 +28,7 @@ impl VisiDebugSettings {
 		egui::ComboBox::from_id_salt(concat!(file!(), line!()))
 			.selected_text(format!("{:?}", self.s.debug_type))
 			.show_ui(ui, |ui| {
-				for x in (0..DebugType::LEN).map(|i| DebugType::try_from(i).unwrap()) {
+				for x in (0..DebugType::LEN).map(DebugType::from) {
 					ui.selectable_value(&mut self.s.debug_type, x, format!("{:?}", x));
 				}
 			});

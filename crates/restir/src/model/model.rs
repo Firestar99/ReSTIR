@@ -15,8 +15,8 @@ pub struct VisiCpuModel {
 impl VisiCpuModel {
 	pub fn new(
 		bindless: &Bindless,
-		vertices: impl Iterator<Item = VisiVertex> + ExactSizeIterator,
-		indices: impl Iterator<Item = VisiIndices> + ExactSizeIterator,
+		vertices: impl ExactSizeIterator<Item = VisiVertex>,
+		indices: impl ExactSizeIterator<Item = VisiIndices>,
 	) -> anyhow::Result<Self> {
 		let triangles = bindless.buffer().alloc_shared_from_iter(
 			&BindlessBufferCreateInfo {

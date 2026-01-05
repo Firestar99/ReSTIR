@@ -43,8 +43,8 @@ pub fn cube(bindless: &Bindless, transform: Affine3A) -> anyhow::Result<VisiCpuM
 	let vertices = vertices
 		.as_chunks::<3>()
 		.0
-		.into_iter()
+		.iter()
 		.map(|pos| VisiVertex(transform.transform_point3(Vec3::from_array(*pos))));
-	let indices = indices.as_chunks::<3>().0.into_iter().map(|i| VisiIndices(*i));
+	let indices = indices.as_chunks::<3>().0.iter().map(|i| VisiIndices(*i));
 	VisiCpuModel::new(bindless, vertices, indices)
 }

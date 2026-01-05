@@ -5,7 +5,6 @@ use rust_gpu_bindless_macros::BufferStructPlain;
 /// The barycentrics and the derivatives of a Triangle at a certain pixel on the screen
 ///
 /// See http://filmicworlds.com/blog/visibility-buffer-rendering-with-material-graphs/
-
 #[repr(C)]
 #[derive(Copy, Clone, Debug, BufferStructPlain)]
 pub struct BarycentricDeriv {

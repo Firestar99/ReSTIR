@@ -51,8 +51,8 @@ impl VisiPipelines {
 		Ok(Arc::new(Self {
 			bindless: bindless.clone(),
 			format,
-			raster_pipeline: VisiRasterPipeline::new(&bindless, format)?,
-			debug_pipeline: VisiDebugPipeline::new(&bindless)?,
+			raster_pipeline: VisiRasterPipeline::new(bindless, format)?,
+			debug_pipeline: VisiDebugPipeline::new(bindless)?,
 		}))
 	}
 
@@ -165,10 +165,10 @@ impl VisiRenderer {
 				load_op: LoadOp::Clear,
 				store_op: StoreOp::DontCare,
 			}),
-			|mut rp| {
+			|rp| {
 				let scene_buffer = info.scene.scene.to_transient(rp);
 				for draw in &info.scene.draws {
-					self.pipeline.raster_pipeline.draw(&mut rp, scene_buffer, draw)?;
+					self.pipeline.raster_pipeline.draw(rp, scene_buffer, draw)?;
 				}
 				Ok(())
 			},

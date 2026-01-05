@@ -11,6 +11,12 @@ pub struct VisiCpuSceneAccum {
 	pub instances: HashMap<VisiCpuModel, Vec<VisiInstance>>,
 }
 
+impl Default for VisiCpuSceneAccum {
+	fn default() -> Self {
+		Self::new()
+	}
+}
+
 impl VisiCpuSceneAccum {
 	pub fn new() -> Self {
 		Self {
@@ -23,14 +29,11 @@ impl VisiCpuSceneAccum {
 			model: model.model.to_strong(),
 			info: instance,
 		};
-		self.instances
-			.entry(model.clone())
-			.or_insert_with(Vec::new)
-			.push(instance);
+		self.instances.entry(model.clone()).or_default().push(instance);
 	}
 
 	pub fn finish(self, bindless: &Bindless, camera: Camera) -> anyhow::Result<VisiCpuScene> {
-		let mut instance_data = Vec::with_capacity(self.instances.iter().map(|(_, i)| i.len()).sum());
+		let mut instance_data = Vec::with_capacity(self.instances.values().map(|i| i.len()).sum());
 		let draws = self
 			.instances
 			.into_iter()
