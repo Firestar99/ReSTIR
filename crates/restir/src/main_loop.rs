@@ -154,7 +154,7 @@ pub async fn main_loop(event_loop: EventLoopExecutor, events: Receiver<Event<()>
 			let mut accum = VisiCpuSceneAccum::new();
 			let mut add_model_at = |model: &VisiCpuModel, at: Vec3| {
 				accum.push(
-					&model,
+					model,
 					VisiInstanceInfo {
 						world_from_local: AffineTransform::new(Affine3A::from_translation(at)),
 					},
@@ -187,14 +187,14 @@ pub async fn main_loop(event_loop: EventLoopExecutor, events: Receiver<Event<()>
 
 		let swapchain_image = {
 			profiling::scope!("render");
-			bindless.execute(|mut cmd| {
-				let mut output_image = swapchain_image.access_dont_care::<TransferWrite>(&cmd)?;
+			bindless.execute(|cmd| {
+				let mut output_image = swapchain_image.access_dont_care::<TransferWrite>(cmd)?;
 				cmd.clear_image(RenderingAttachmentImage::ColorF {
 					image: &mut output_image,
 					clear_value: Vec4::ZERO,
 				})?;
 				let mut output_image = output_image.transition::<StorageReadWrite>()?;
-				visi_renderer.render(&mut cmd, &mut output_image, render_info).unwrap();
+				visi_renderer.render(cmd, &mut output_image, render_info).unwrap();
 				let mut output_image = output_image.transition::<ColorAttachment>()?;
 				egui_output
 					.draw(
