@@ -3,6 +3,7 @@ mod buffer_metadata_cpu;
 mod buffer_table;
 mod descriptor_content;
 mod descriptor_counts;
+pub mod dyn_buffer;
 mod extent;
 mod image_table;
 mod mutdesc;
