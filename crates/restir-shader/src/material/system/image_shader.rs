@@ -1,6 +1,6 @@
 //! A material shader that is evaluated on an image
 
-use crate::material::system::MaterialEvalFn;
+use crate::material::system::{MaterialEvalFn, MaterialEvalParam};
 use crate::visibility::id::PackedGeometryId;
 use crate::visibility::scene::VisiScene;
 use glam::{UVec2, UVec3, UVec4, Vec3Swizzles};
@@ -38,8 +38,16 @@ pub fn material_shader_image_eval<T: BufferStruct, M: BufferStruct, F: MaterialE
 		let tri = scene.load_triangle(&*descriptors, param.depth_image, pixel, geo);
 
 		if tri.model.dyn_material_model.can_upcast(param.buffer_type) {
-			let material_model = tri.model.dyn_material_model.upcast(param.buffer_type);
-			let out_color = eval(&param.inner, &mut *descriptors, scene, tri, material_model);
+			let material = tri.model.dyn_material_model.upcast(param.buffer_type);
+			let out_color = eval(
+				&mut *descriptors,
+				MaterialEvalParam {
+					param: &param.inner,
+					scene,
+					tri,
+					material,
+				},
+			);
 			unsafe {
 				param.output_image.access(&*descriptors).write(pixel, out_color);
 			}
