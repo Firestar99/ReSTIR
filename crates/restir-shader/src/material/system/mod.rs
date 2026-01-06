@@ -6,12 +6,12 @@ use rust_gpu_bindless_shaders::descriptor::{Buffer, DescriptorId, Descriptors, S
 pub mod image_shader;
 
 pub trait MaterialEvalFn<T: BufferStruct, M: BufferContent + ?Sized>:
-	FnOnce(&T, &mut Descriptors<'_>, VisiScene, VisiTriangle, Strong) -> Vec4
+	FnOnce(&T, &mut Descriptors<'_>, VisiScene, VisiTriangle, StrongDesc<Buffer<u32>>) -> Vec4
 {
 }
 
 impl<T: BufferStruct, M: BufferContent + ?Sized, I> MaterialEvalFn<T, M> for I where
-	I: FnOnce(&T, &mut Descriptors<'_>, VisiScene, VisiTriangle, Strong) -> Vec4
+	I: FnOnce(&T, &mut Descriptors<'_>, VisiScene, VisiTriangle, StrongDesc<Buffer<u32>>) -> Vec4
 {
 }
 

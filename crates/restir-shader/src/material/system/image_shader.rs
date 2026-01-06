@@ -42,7 +42,7 @@ pub fn material_shader_image_eval<T: BufferStruct, M: BufferStruct, F: MaterialE
 		// if tri.model.dyn_material_model.can_upcast(param.buffer_type) {
 		// 	let material_model = tri.model.dyn_material_model.upcast(param.buffer_type);
 		// let material_model = unsafe { StrongDesc::new(param.scene.id()) };
-		let material_model = unsafe { StrongDesc::<Buffer<u32>>::new(param.scene.id()) }.r;
+		let material_model = unsafe { StrongDesc::<Buffer<u32>>::new(param.scene.id()) };
 		let out_color = eval(&param.inner, &mut *descriptors, scene, tri, material_model);
 		// let out_color = Vec4::ZERO;
 		unsafe {

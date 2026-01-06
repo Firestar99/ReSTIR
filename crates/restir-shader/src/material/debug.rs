@@ -5,7 +5,7 @@ use glam::{Vec3, Vec4};
 use num_enum::{FromPrimitive, IntoPrimitive};
 use rust_gpu_bindless_macros::BufferStruct;
 use rust_gpu_bindless_shaders::buffer_content::BufferStructPlain;
-use rust_gpu_bindless_shaders::descriptor::{Buffer, DescriptorId, Descriptors, Strong, StrongDesc};
+use rust_gpu_bindless_shaders::descriptor::{Buffer, Desc, DescriptorId, Descriptors, Strong, StrongDesc};
 
 #[repr(u32)]
 #[derive(Copy, Clone, Debug, Default, Eq, PartialEq, Ord, PartialOrd, FromPrimitive, IntoPrimitive)]
@@ -60,8 +60,7 @@ fn pbr_eval(
 	_: &mut Descriptors<'_>,
 	_: VisiScene,
 	tri: VisiTriangle,
-	_: Strong,
-	// _: StrongDesc<Buffer<u32>>,
+	_: Desc<Strong, Buffer<u32>>,
 ) -> Vec4 {
 	// let geo = tri.geo;
 	// if geo.is_clear {
