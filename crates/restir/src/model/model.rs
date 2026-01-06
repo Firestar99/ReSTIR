@@ -1,8 +1,10 @@
 use restir_shader::visibility::model::{VisiIndices, VisiModel, VisiVertex};
 use rust_gpu_bindless::__private::static_assertions::const_assert_eq;
+use rust_gpu_bindless::descriptor::dyn_buffer::DynBufferRCExt;
 use rust_gpu_bindless::descriptor::{
-	Bindless, BindlessBufferCreateInfo, BindlessBufferUsage, Buffer, DescBufferLenExt, RCDesc, RCDescExt,
+	Bindless, BindlessBufferCreateInfo, BindlessBufferUsage, Buffer, DescBufferLenExt, RC, RCDesc, RCDescExt,
 };
+use rust_gpu_bindless_shaders::descriptor::dyn_buffer::DynBuffer;
 
 #[derive(Clone, Eq, PartialEq, Hash)]
 pub struct VisiCpuModel {
@@ -17,7 +19,7 @@ impl VisiCpuModel {
 		bindless: &Bindless,
 		vertices: impl ExactSizeIterator<Item = VisiVertex>,
 		indices: impl ExactSizeIterator<Item = VisiIndices>,
-		dyn_material_model: &RCDesc,
+		dyn_material_model: &DynBuffer<RC>,
 	) -> anyhow::Result<Self> {
 		let triangles = bindless.buffer().alloc_shared_from_iter(
 			&BindlessBufferCreateInfo {
@@ -48,7 +50,7 @@ impl VisiCpuModel {
 			VisiModel {
 				triangles: triangles.to_strong(),
 				vertices: vertices.to_strong(),
-				dyn_material_model,
+				dyn_material_model: dyn_material_model.to_strong(),
 			},
 		)?;
 

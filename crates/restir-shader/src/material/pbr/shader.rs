@@ -5,7 +5,7 @@ use crate::material_shader;
 use crate::visibility::scene::{VisiScene, VisiTriangle};
 use glam::Vec4;
 use rust_gpu_bindless_macros::BufferStruct;
-use rust_gpu_bindless_shaders::descriptor::{Buffer, Descriptors, TransientDesc};
+use rust_gpu_bindless_shaders::descriptor::{Buffer, Descriptors, StrongDesc, TransientDesc};
 use spirv_std::Sampler;
 use spirv_std::image::ImageWithMethods;
 use spirv_std::image::sample_with::grad;
@@ -17,16 +17,16 @@ pub struct MaterialParam<'a> {
 	pub light_scene: TransientDesc<'a, Buffer<LightScene>>,
 }
 
-material_shader!(pbr_eval, MaterialParam<'static>, pbr_eval);
+material_shader!(pbr_eval, MaterialParam<'static>, PbrModel, pbr_eval);
 
 fn pbr_eval(
 	param: &MaterialParam<'static>,
 	descriptors: &mut Descriptors<'_>,
 	scene: VisiScene,
 	tri: VisiTriangle,
+	model: StrongDesc<Buffer<PbrModel>>,
 ) -> Vec4 {
 	let descriptors = &*descriptors;
-	let model = unsafe { tri.model.dyn_material_model.transmute_buffer::<PbrModel>() };
 	let model = model.access(descriptors).load();
 
 	let vtx_tri = model.load_vertices(descriptors, tri.indices);
