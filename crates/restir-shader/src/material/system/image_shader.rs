@@ -3,11 +3,13 @@
 use crate::material::system::MaterialEvalFn;
 use crate::visibility::id::PackedGeometryId;
 use crate::visibility::scene::VisiScene;
-use glam::{UVec2, UVec3, UVec4, Vec3Swizzles};
+use glam::{UVec2, UVec3, UVec4, Vec3Swizzles, Vec4};
 use rust_gpu_bindless_macros::BufferStruct;
 use rust_gpu_bindless_shaders::buffer_content::BufferStruct;
 use rust_gpu_bindless_shaders::descriptor::dyn_buffer::BufferType;
-use rust_gpu_bindless_shaders::descriptor::{Buffer, Descriptors, Image, Image2d, Image2dU, MutImage, TransientDesc};
+use rust_gpu_bindless_shaders::descriptor::{
+	Buffer, Desc, DescriptorId, Descriptors, Image, Image2d, Image2dU, MutImage, Strong, StrongDesc, TransientDesc,
+};
 use static_assertions::const_assert_eq;
 
 #[repr(C)]
@@ -37,13 +39,16 @@ pub fn material_shader_image_eval<T: BufferStruct, M: BufferStruct, F: MaterialE
 		let geo = PackedGeometryId::from_u32(packed_geo.x).unpack();
 		let tri = scene.load_triangle(&*descriptors, param.depth_image, pixel, geo);
 
-		if tri.model.dyn_material_model.can_upcast(param.buffer_type) {
-			let material_model = tri.model.dyn_material_model.upcast(param.buffer_type);
-			let out_color = eval(&param.inner, &mut *descriptors, scene, tri, material_model);
-			unsafe {
-				param.output_image.access(&*descriptors).write(pixel, out_color);
-			}
+		// if tri.model.dyn_material_model.can_upcast(param.buffer_type) {
+		// 	let material_model = tri.model.dyn_material_model.upcast(param.buffer_type);
+		// let material_model = unsafe { StrongDesc::new(param.scene.id()) };
+		let material_model = unsafe { StrongDesc::<Buffer<u32>>::new(param.scene.id()) }.r;
+		let out_color = eval(&param.inner, &mut *descriptors, scene, tri, material_model);
+		// let out_color = Vec4::ZERO;
+		unsafe {
+			param.output_image.access(&*descriptors).write(pixel, out_color);
 		}
+		// }
 	}
 }
 

@@ -5,7 +5,7 @@ use glam::{Vec3, Vec4};
 use num_enum::{FromPrimitive, IntoPrimitive};
 use rust_gpu_bindless_macros::BufferStruct;
 use rust_gpu_bindless_shaders::buffer_content::BufferStructPlain;
-use rust_gpu_bindless_shaders::descriptor::{Buffer, Descriptors, StrongDesc};
+use rust_gpu_bindless_shaders::descriptor::{Buffer, DescriptorId, Descriptors, Strong, StrongDesc};
 
 #[repr(u32)]
 #[derive(Copy, Clone, Debug, Default, Eq, PartialEq, Ord, PartialOrd, FromPrimitive, IntoPrimitive)]
@@ -53,29 +53,30 @@ impl Default for DebugSettings {
 	}
 }
 
-material_shader!(debug_material, DebugSettings, (), pbr_eval);
+material_shader!(debug_material, DebugSettings, u32, pbr_eval);
 
 fn pbr_eval(
 	debug_settings: &DebugSettings,
 	_: &mut Descriptors<'_>,
 	_: VisiScene,
 	tri: VisiTriangle,
-	_: StrongDesc<Buffer<()>>,
+	_: Strong,
+	// _: StrongDesc<Buffer<u32>>,
 ) -> Vec4 {
-	let geo = tri.geo;
-	if geo.is_clear {
-		Vec4::ZERO
-	} else {
-		let view_range = debug_settings.view_range;
-		let instance_id_color = || view_range.clamp((geo.instance_id.to_u32() + 1) as f32);
-		let triangle_id_color = || view_range.clamp((geo.triangle_id.to_u32() + 1) as f32);
-		let color = match debug_settings.debug_type {
-			DebugType::None => Vec3::ZERO,
-			DebugType::ColorfulIds => Vec3::from((instance_id_color(), triangle_id_color(), 0.)),
-			DebugType::InstanceId => Vec3::from((instance_id_color(), 0., 0.)),
-			DebugType::TriangleId => Vec3::from((triangle_id_color(), 0., 0.)),
-			DebugType::Barycentrics => tri.barycentric.lambda.0,
-		};
-		Vec4::from((color, debug_settings.debug_mix))
-	}
+	// let geo = tri.geo;
+	// if geo.is_clear {
+	Vec4::ZERO
+	// } else {
+	// 	let view_range = debug_settings.view_range;
+	// 	let instance_id_color = || view_range.clamp((geo.instance_id.to_u32() + 1) as f32);
+	// 	let triangle_id_color = || view_range.clamp((geo.triangle_id.to_u32() + 1) as f32);
+	// 	let color = match debug_settings.debug_type {
+	// 		DebugType::None => Vec3::ZERO,
+	// 		DebugType::ColorfulIds => Vec3::from((instance_id_color(), triangle_id_color(), 0.)),
+	// 		DebugType::InstanceId => Vec3::from((instance_id_color(), 0., 0.)),
+	// 		DebugType::TriangleId => Vec3::from((triangle_id_color(), 0., 0.)),
+	// 		DebugType::Barycentrics => tri.barycentric.lambda.0,
+	// 	};
+	// 	Vec4::from((color, debug_settings.debug_mix))
+	// }
 }
