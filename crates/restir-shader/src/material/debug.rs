@@ -7,6 +7,12 @@ use rust_gpu_bindless_macros::BufferStruct;
 use rust_gpu_bindless_shaders::buffer_content::BufferStructPlain;
 use rust_gpu_bindless_shaders::descriptor::Descriptors;
 
+#[repr(C)]
+#[derive(Copy, Clone, Debug, Default, BufferStruct)]
+pub struct DebugMaterial {
+	_dummy: u32,
+}
+
 #[repr(u32)]
 #[derive(Copy, Clone, Debug, Default, Eq, PartialEq, Ord, PartialOrd, FromPrimitive, IntoPrimitive)]
 pub enum DebugType {
@@ -53,9 +59,9 @@ impl Default for DebugSettings {
 	}
 }
 
-material_shader!(debug_material, DebugSettings, (), pbr_eval);
+material_shader!(debug_material, DebugSettings, DebugMaterial, pbr_eval);
 
-fn pbr_eval(_: &mut Descriptors<'_>, p: MaterialEvalParam<'_, DebugSettings, ()>) -> Vec4 {
+fn pbr_eval(_: &mut Descriptors<'_>, p: MaterialEvalParam<'_, DebugSettings, DebugMaterial>) -> Vec4 {
 	let geo = p.tri.geo;
 	if geo.is_clear {
 		Vec4::ZERO

@@ -176,7 +176,7 @@ impl VisiRenderer {
 
 		let packed_vertex_image = packed_vertex_image.transition::<SampledRead>()?;
 		let depth = depth.transition::<SampledRead>()?;
-		self.pipeline.debug_pipeline.image.dispatch(
+		self.pipeline.debug_pipeline.dispatch_image(
 			cmd,
 			info.scene,
 			packed_vertex_image.to_transient_sampled()?,
