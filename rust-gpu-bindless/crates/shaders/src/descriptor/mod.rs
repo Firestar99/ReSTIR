@@ -1,6 +1,7 @@
 mod buffer;
 mod descriptor_content;
 mod descriptors;
+pub mod dyn_buffer;
 mod id;
 mod image;
 mod predefined_image;
