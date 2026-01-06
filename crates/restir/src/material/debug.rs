@@ -6,7 +6,7 @@ use rust_gpu_bindless_shaders::descriptor::dyn_buffer::BufferType;
 use std::ops::Deref;
 use std::sync::LazyLock;
 
-pub const DEBUG_MATERIAL_BUFFER_TYPE: LazyLock<BufferType<DebugMaterial>> =
+pub static DEBUG_MATERIAL_BUFFER_TYPE: LazyLock<BufferType<DebugMaterial>> =
 	LazyLock::new(|| register_dyn_buffer_type());
 
 pub struct VisiDebugPipeline(pub MaterialPipeline<DebugSettings, DebugMaterial>);
