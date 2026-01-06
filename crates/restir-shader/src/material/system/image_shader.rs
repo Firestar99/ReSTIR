@@ -14,7 +14,7 @@ use static_assertions::const_assert_eq;
 #[derive(Copy, Clone, BufferStruct)]
 pub struct Param<'a, T: BufferStruct, M: BufferStruct> {
 	pub scene: TransientDesc<'a, Buffer<VisiScene>>,
-	pub buffer_type: BufferType<M>,
+	pub material_buffer_type: BufferType<M>,
 	pub packed_vertex_image: TransientDesc<'a, Image<Image2dU>>,
 	pub depth_image: TransientDesc<'a, Image<Image2d>>,
 	pub output_image: TransientDesc<'a, MutImage<Image2d>>,
@@ -37,8 +37,8 @@ pub fn material_shader_image_eval<T: BufferStruct, M: BufferStruct, F: MaterialE
 		let geo = PackedGeometryId::from_u32(packed_geo.x).unpack();
 		let tri = scene.load_triangle(&*descriptors, param.depth_image, pixel, geo);
 
-		if tri.model.dyn_material_model.can_upcast(param.buffer_type) {
-			let material = tri.model.dyn_material_model.upcast(param.buffer_type);
+		if tri.model.dyn_material_model.can_upcast(param.material_buffer_type) {
+			let material = tri.model.dyn_material_model.upcast(param.material_buffer_type);
 			let out_color = eval(
 				&mut *descriptors,
 				MaterialEvalParam {
