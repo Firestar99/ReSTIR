@@ -59,9 +59,9 @@ impl Default for DebugSettings {
 	}
 }
 
-material_shader!(debug_material, DebugSettings, DebugMaterial, pbr_eval);
+material_shader!(debug_material, DebugSettings, DebugMaterial, debug_eval);
 
-fn pbr_eval(_: &mut Descriptors<'_>, p: MaterialEvalParam<'_, DebugSettings, DebugMaterial>) -> Vec4 {
+fn debug_eval(_: &mut Descriptors<'_>, p: MaterialEvalParam<'_, DebugSettings, DebugMaterial>) -> Vec4 {
 	let geo = p.tri.geo;
 	if geo.is_clear {
 		Vec4::ZERO
