@@ -1,11 +1,11 @@
+use crate::material::system::MaterialEvalParam;
 use crate::material_shader;
 use crate::utils::view_range::DebugValueRange;
-use crate::visibility::scene::{VisiScene, VisiTriangle};
 use glam::{Vec3, Vec4};
 use num_enum::{FromPrimitive, IntoPrimitive};
 use rust_gpu_bindless_macros::BufferStruct;
 use rust_gpu_bindless_shaders::buffer_content::BufferStructPlain;
-use rust_gpu_bindless_shaders::descriptor::{Buffer, Descriptors, StrongDesc};
+use rust_gpu_bindless_shaders::descriptor::Descriptors;
 
 #[repr(u32)]
 #[derive(Copy, Clone, Debug, Default, Eq, PartialEq, Ord, PartialOrd, FromPrimitive, IntoPrimitive)]
@@ -55,17 +55,12 @@ impl Default for DebugSettings {
 
 material_shader!(debug_material, DebugSettings, (), pbr_eval);
 
-fn pbr_eval(
-	debug_settings: &DebugSettings,
-	_: &mut Descriptors<'_>,
-	_: VisiScene,
-	tri: VisiTriangle,
-	_: StrongDesc<Buffer<()>>,
-) -> Vec4 {
-	let geo = tri.geo;
+fn pbr_eval(_: &mut Descriptors<'_>, p: MaterialEvalParam<'_, DebugSettings, ()>) -> Vec4 {
+	let geo = p.tri.geo;
 	if geo.is_clear {
 		Vec4::ZERO
 	} else {
+		let debug_settings = p.param;
 		let view_range = debug_settings.view_range;
 		let instance_id_color = || view_range.clamp((geo.instance_id.to_u32() + 1) as f32);
 		let triangle_id_color = || view_range.clamp((geo.triangle_id.to_u32() + 1) as f32);
@@ -74,7 +69,7 @@ fn pbr_eval(
 			DebugType::ColorfulIds => Vec3::from((instance_id_color(), triangle_id_color(), 0.)),
 			DebugType::InstanceId => Vec3::from((instance_id_color(), 0., 0.)),
 			DebugType::TriangleId => Vec3::from((triangle_id_color(), 0., 0.)),
-			DebugType::Barycentrics => tri.barycentric.lambda.0,
+			DebugType::Barycentrics => p.tri.barycentric.lambda.0,
 		};
 		Vec4::from((color, debug_settings.debug_mix))
 	}
