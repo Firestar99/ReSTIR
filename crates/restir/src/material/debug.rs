@@ -1,4 +1,4 @@
-use crate::material::system::material_pipeline::MaterialPipeline;
+use crate::material::pipeline::MaterialPipeline;
 use restir_shader::material::debug::{DebugMaterial, DebugSettings};
 use rust_gpu_bindless::descriptor::Bindless;
 use rust_gpu_bindless::descriptor::dyn_buffer::register_dyn_buffer_type;

@@ -1,6 +1,6 @@
 //! A material shader that is evaluated on an image
 
-use crate::material::system::{MaterialEvalFn, MaterialEvalParam};
+use crate::material::{MaterialEvalFn, MaterialEvalParam};
 use crate::visibility::id::PackedGeometryId;
 use crate::visibility::scene::VisiScene;
 use glam::{UVec2, UVec3, UVec4, Vec3Swizzles};
@@ -65,17 +65,11 @@ macro_rules! material_shader_image {
 		#[rust_gpu_bindless_macros::bindless(compute(threads(8, 8)))]
 		pub fn $name(
 			#[bindless(descriptors)] mut descriptors: rust_gpu_bindless_shaders::descriptor::Descriptors<'_>,
-			#[bindless(param)] param: &$crate::material::system::image_shader::Param<'static, $param, $model>,
+			#[bindless(param)] param: &$crate::material::image_shader::Param<'static, $param, $model>,
 			#[spirv(workgroup_id)] wg_id: glam::UVec3,
 			#[spirv(local_invocation_id)] inv_id: glam::UVec3,
 		) {
-			$crate::material::system::image_shader::material_shader_image_eval(
-				&mut descriptors,
-				param,
-				wg_id,
-				inv_id,
-				$eval,
-			)
+			$crate::material::image_shader::material_shader_image_eval(&mut descriptors, param, wg_id, inv_id, $eval)
 		}
 	};
 }

@@ -1,5 +1,5 @@
 use crate::visibility::scene::VisiCpuScene;
-use restir_shader::material::system::image_shader::{MATERIAL_IMAGE_WG_SIZE, Param};
+use restir_shader::material::image_shader::{MATERIAL_IMAGE_WG_SIZE, Param};
 use rust_gpu_bindless::descriptor::{Bindless, RCDescExt};
 use rust_gpu_bindless::pipeline::{BindlessComputePipeline, Recording};
 use rust_gpu_bindless_shaders::buffer_content::BufferStruct;

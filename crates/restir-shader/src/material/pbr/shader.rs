@@ -1,7 +1,7 @@
+use crate::material::MaterialEvalParam;
 use crate::material::light::scene::LightScene;
 use crate::material::pbr::eval::SurfaceLocation;
 use crate::material::pbr::model::PbrModel;
-use crate::material::system::MaterialEvalParam;
 use crate::material_shader;
 use glam::Vec4;
 use rust_gpu_bindless_macros::BufferStruct;

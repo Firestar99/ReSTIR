@@ -1,4 +1,4 @@
-use crate::material::system::MaterialEvalParam;
+use crate::material::MaterialEvalParam;
 use crate::material_shader;
 use crate::utils::view_range::DebugValueRange;
 use glam::{Vec3, Vec4};
