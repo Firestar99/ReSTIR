@@ -25,16 +25,8 @@ impl<T: BufferStruct, M: BufferStruct> MaterialPipeline<T, M> {
 		})
 	}
 
-	pub fn dispatch_image(
-		&self,
-		cmd: &mut Recording,
-		scene: VisiCpuScene,
-		packed_vertex_image: TransientDesc<Image<Image2dU>>,
-		depth_image: TransientDesc<Image<Image2d>>,
-		output_image: TransientDesc<MutImage<Image2d>>,
-		param: T,
-	) -> anyhow::Result<()> {
-		let size = scene.camera.viewport_size;
+	pub fn dispatch_image(&self, cmd: &mut Recording, info: &DispatchImageInfo, param: T) -> anyhow::Result<()> {
+		let size = info.scene.camera.viewport_size;
 		cmd.dispatch(
 			&self.image_pipeline,
 			[
@@ -43,14 +35,21 @@ impl<T: BufferStruct, M: BufferStruct> MaterialPipeline<T, M> {
 				1,
 			],
 			Param {
-				scene: scene.scene.to_transient(cmd),
+				scene: info.scene.scene.to_transient(cmd),
 				material_buffer_type: self.material_buffer_type,
-				packed_vertex_image,
-				depth_image,
-				output_image,
+				packed_vertex_image: info.packed_vertex_image,
+				depth_image: info.depth_image,
+				output_image: info.output_image,
 				inner: param,
 			},
 		)?;
 		Ok(())
 	}
+}
+
+pub struct DispatchImageInfo<'a> {
+	pub scene: VisiCpuScene,
+	pub packed_vertex_image: TransientDesc<'a, Image<Image2dU>>,
+	pub depth_image: TransientDesc<'a, Image<Image2d>>,
+	pub output_image: TransientDesc<'a, MutImage<Image2d>>,
 }

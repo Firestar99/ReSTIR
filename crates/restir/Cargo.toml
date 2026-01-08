@@ -32,6 +32,7 @@ rust-gpu-bindless-egui = { workspace = true, features = ["winit"] }
 smallvec.workspace = true
 anyhow.workspace = true
 profiling.workspace = true
+parking_lot.workspace = true
 
 [build-dependencies]
 anyhow.workspace = true

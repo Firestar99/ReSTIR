@@ -2023,6 +2023,7 @@ dependencies = [
  "ash",
  "egui",
  "glam",
+ "parking_lot",
  "profiling",
  "restir-shader",
  "rust-gpu-bindless",

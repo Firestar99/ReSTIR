@@ -1,4 +1,5 @@
-use crate::material::debug::VisiDebugPipeline;
+use crate::material::pass::{MaterialEval, MaterialPass};
+use crate::material::pipeline::DispatchImageInfo;
 use crate::visibility::raster::VisiRasterPipeline;
 use crate::visibility::scene::VisiCpuScene;
 use anyhow::anyhow;
@@ -43,7 +44,7 @@ pub struct VisiPipelines {
 	bindless: Bindless,
 	format: VisiPipelinesFormat,
 	raster_pipeline: VisiRasterPipeline,
-	debug_pipeline: VisiDebugPipeline,
+	material_pass: MaterialPass,
 }
 
 impl VisiPipelines {
@@ -52,7 +53,7 @@ impl VisiPipelines {
 			bindless: bindless.clone(),
 			format,
 			raster_pipeline: VisiRasterPipeline::new(bindless, format)?,
-			debug_pipeline: VisiDebugPipeline::new(bindless)?,
+			material_pass: MaterialPass::new(bindless)?,
 		}))
 	}
 
@@ -176,13 +177,16 @@ impl VisiRenderer {
 
 		let packed_vertex_image = packed_vertex_image.transition::<SampledRead>()?;
 		let depth = depth.transition::<SampledRead>()?;
-		self.pipeline.debug_pipeline.dispatch_image(
+
+		self.pipeline.material_pass.debug.set_state(info.debug_settings);
+		self.pipeline.material_pass.dispatch_image(
 			cmd,
-			info.scene,
-			packed_vertex_image.to_transient_sampled()?,
-			depth.to_transient_sampled()?,
-			output_image.to_mut_transient(),
-			info.debug_settings,
+			&DispatchImageInfo {
+				scene: info.scene,
+				packed_vertex_image: packed_vertex_image.to_transient_sampled()?,
+				depth_image: depth.to_transient_sampled()?,
+				output_image: output_image.to_mut_transient(),
+			},
 		)?;
 
 		self.resources = Some(VisiRendererResources {
