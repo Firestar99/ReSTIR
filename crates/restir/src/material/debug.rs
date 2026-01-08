@@ -4,20 +4,21 @@ use rust_gpu_bindless::descriptor::Bindless;
 use rust_gpu_bindless::descriptor::dyn_buffer::register_dyn_buffer_type;
 use rust_gpu_bindless_shaders::descriptor::dyn_buffer::BufferType;
 use std::ops::Deref;
-use std::sync::LazyLock;
+use std::sync::{Arc, LazyLock};
 
 pub static DEBUG_MATERIAL_BUFFER_TYPE: LazyLock<BufferType<DebugMaterial>> =
 	LazyLock::new(|| register_dyn_buffer_type());
 
-pub struct VisiDebugPipeline(pub MaterialPipeline<DebugSettings, DebugMaterial>);
+#[derive(Clone)]
+pub struct VisiDebugPipeline(pub Arc<MaterialPipeline<DebugSettings, DebugMaterial>>);
 
 impl VisiDebugPipeline {
 	pub fn new(bindless: &Bindless) -> anyhow::Result<Self> {
-		Ok(Self(MaterialPipeline::new(
+		Ok(Self(Arc::new(MaterialPipeline::new(
 			bindless,
 			*DEBUG_MATERIAL_BUFFER_TYPE,
 			crate::shader::material::debug::debug_material::image::new(),
-		)?))
+		)?)))
 	}
 }
 
