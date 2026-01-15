@@ -1,10 +1,12 @@
 use restir_shader::visibility::model::{VisiIndices, VisiModel, VisiVertex};
+use restir_shader::visibility::scene::VisiInstanceInfo;
 use rust_gpu_bindless::__private::static_assertions::const_assert_eq;
 use rust_gpu_bindless::descriptor::dyn_buffer::DynBufferRCExt;
 use rust_gpu_bindless::descriptor::{
 	Bindless, BindlessBufferCreateInfo, BindlessBufferUsage, Buffer, DescBufferLenExt, RC, RCDesc, RCDescExt,
 };
 use rust_gpu_bindless_shaders::descriptor::dyn_buffer::DynBuffer;
+use std::sync::Arc;
 
 #[derive(Clone, Eq, PartialEq, Hash)]
 pub struct VisiCpuModel {
@@ -64,4 +66,8 @@ impl VisiCpuModel {
 			indices_count,
 		})
 	}
+}
+
+pub struct VisiModelNode {
+	pub models: Vec<(Arc<VisiCpuModel>, VisiInstanceInfo)>,
 }

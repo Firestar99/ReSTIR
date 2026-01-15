@@ -4,7 +4,7 @@ use crate::visibility::barycentric::BarycentricDeriv;
 use crate::visibility::id::{GeometryId, InstanceId};
 use crate::visibility::model::{VisiIndices, VisiModel, VisiVertex};
 use core::ops::{Deref, DerefMut};
-use glam::{UVec2, Vec4};
+use glam::{Affine3A, UVec2, Vec4};
 use rust_gpu_bindless_macros::BufferStruct;
 use rust_gpu_bindless_shaders::descriptor::{AliveDescRef, Buffer, Desc, Descriptors, Image, Image2d, StrongDesc};
 
@@ -40,6 +40,14 @@ impl DerefMut for VisiInstance {
 #[derive(Copy, Clone, Debug, BufferStruct)]
 pub struct VisiInstanceInfo {
 	pub world_from_local: AffineTransform,
+}
+
+impl VisiInstanceInfo {
+	pub fn new(transform: Affine3A) -> Self {
+		Self {
+			world_from_local: AffineTransform::new(transform),
+		}
+	}
 }
 
 #[repr(C)]

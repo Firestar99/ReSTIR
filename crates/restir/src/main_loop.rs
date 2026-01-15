@@ -160,21 +160,13 @@ pub async fn main_loop(event_loop: EventLoopExecutor, events: Receiver<Event<()>
 
 			let mut accum = VisiCpuSceneAccum::new();
 			let mut add_model_at = |model: &VisiCpuModel, at: Vec3| {
-				accum.push(
-					model,
-					VisiInstanceInfo {
-						world_from_local: AffineTransform::new(Affine3A::from_translation(at)),
-					},
-				);
+				accum.push(model, VisiInstanceInfo::new(Affine3A::from_translation(at)));
 			};
 			add_model_at(&model_cube, Vec3::new(0., 0., -6.));
 			add_model_at(&model_cube, Vec3::new(4., 0., -2.));
 			add_model_at(&model_cube, Vec3::new(0., 3., -3.));
 			add_model_at(&model_cube, Vec3::new(-4., 0., -4.));
-			accum.extend(
-				VisiInstanceInfo::new(Affine3A::from_translation(Vec3::new(4., 4., 0.))),
-				model_lantern.iter(),
-			);
+			accum.extend(&model_lantern);
 			let scene = accum.finish(&bindless, camera)?;
 
 			render_info = VisiRenderInfo {

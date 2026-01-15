@@ -1,4 +1,4 @@
-use crate::model::VisiCpuModel;
+use crate::model::{VisiCpuModel, VisiModelNode};
 use restir_shader::camera::Camera;
 use restir_shader::visibility::id::InstanceId;
 use restir_shader::visibility::scene::{VisiInstance, VisiInstanceInfo, VisiScene};
@@ -30,6 +30,12 @@ impl VisiCpuSceneAccum {
 			info: instance,
 		};
 		self.instances.entry(model.clone()).or_default().push(instance);
+	}
+
+	pub fn extend<'a>(&mut self, node: &VisiModelNode) {
+		for (model, instance) in &node.models {
+			self.push(model, *instance);
+		}
 	}
 
 	pub fn finish(self, bindless: &Bindless, camera: Camera) -> anyhow::Result<VisiCpuScene> {
