@@ -33,6 +33,10 @@ smallvec.workspace = true
 anyhow.workspace = true
 profiling.workspace = true
 parking_lot.workspace = true
+gltf.workspace = true
+image.workspace = true
+base64.workspace = true
+urlencoding.workspace = true
 
 [build-dependencies]
 anyhow.workspace = true

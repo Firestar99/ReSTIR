@@ -1,3 +1,4 @@
+pub mod gltf;
 #[allow(clippy::module_inception)]
 mod model;
 pub mod parametized;

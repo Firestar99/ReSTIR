@@ -26,12 +26,18 @@ use rust_gpu_bindless_winit::ash::{
 use rust_gpu_bindless_winit::event_loop::{EventLoopExecutor, event_loop_init};
 use rust_gpu_bindless_winit::window_ref::WindowRef;
 use std::f32::consts::PI;
+use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use std::sync::mpsc::Receiver;
 use winit::dpi::PhysicalSize;
 use winit::event::{Event, WindowEvent};
 use winit::raw_window_handle::HasDisplayHandle;
 use winit::window::WindowAttributes;
+
+const MODELS_DIR: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/../../models");
+fn model_lantern() -> PathBuf {
+	PathBuf::from(format!("{}/Lantern/glTF/Lantern.gltf", MODELS_DIR))
+}
 
 pub fn main() {
 	event_loop_init(|event_loop, events| async {
@@ -104,6 +110,7 @@ pub async fn main_loop(event_loop: EventLoopExecutor, events: Receiver<Event<()>
 	};
 
 	let model_cube = crate::model::parametized::cube(&bindless, Affine3A::default())?;
+	let model_lantern = crate::model::gltf::load_gltf(&bindless, Path::new(&model_lantern()), Affine3A::default())?;
 
 	let mut delta_timer = DeltaTimer::new();
 	let mut app_focus = AppFocus::new(event_loop.clone(), window);
@@ -164,6 +171,10 @@ pub async fn main_loop(event_loop: EventLoopExecutor, events: Receiver<Event<()>
 			add_model_at(&model_cube, Vec3::new(4., 0., -2.));
 			add_model_at(&model_cube, Vec3::new(0., 3., -3.));
 			add_model_at(&model_cube, Vec3::new(-4., 0., -4.));
+			accum.extend(
+				VisiInstanceInfo::new(Affine3A::from_translation(Vec3::new(4., 4., 0.))),
+				model_lantern.iter(),
+			);
 			let scene = accum.finish(&bindless, camera)?;
 
 			render_info = VisiRenderInfo {
