@@ -11,11 +11,27 @@ use rust_gpu_bindless::descriptor::{Bindless, BindlessBufferCreateInfo, Bindless
 use rust_gpu_bindless_shaders::descriptor::dyn_buffer::DynBuffer;
 use std::path::Path;
 use std::sync::Arc;
+use restir_shader::material::pbr::model::PbrMaterial;
 
 pub fn load_gltf(bindless: &Bindless, path: &Path, transform: Affine3A) -> anyhow::Result<VisiModelNode> {
 	let gltf = Gltf::open(path)?;
 	let scene = gltf.default_scene().context("gltf no default scene")?;
 	let transforms = gltf.absolute_node_transformations(&scene, transform);
+
+	let materials = gltf.materials().map(|m| {
+		let base_color = ();
+		let normal = ();
+		PbrMaterial {
+			base_color,
+			base_color_factor: m.pbr_metallic_roughness().base_color_factor(),
+			normal,
+			normal_scale: m.normal_texture().map_or(1., |n|n.scale()),
+			occlusion_roughness_metallic,
+			occlusion_strength: 0.,
+			roughness_factor: m.pbr_metallic_roughness().roughness_factor(),
+			metallic_factor: m.pbr_metallic_roughness().metallic_factor(),
+		}
+	}).collect::<Vec<_>>();
 
 	let debug_material = bindless.buffer().alloc_shared_from_data(
 		&BindlessBufferCreateInfo {
