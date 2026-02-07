@@ -1,77 +1,18 @@
 use ash::vk::{BufferImageCopy2, CopyBufferToImageInfo2, Extent3D, ImageAspectFlags, ImageSubresourceLayers, Offset3D};
-use egui::Vec2;
-use futures::future::join_all;
-use glam::Vec4;
+use glam::{UVec2, Vec4};
 use image::Rgba;
-use rayon::prelude::*;
-use rkyv::Deserialize;
-use rkyv::api::high::HighDeserializer;
-use rkyv::rancor::Panic;
 use rust_gpu_bindless::descriptor::{
 	Bindless, BindlessAllocationScheme, BindlessBufferCreateInfo, BindlessBufferUsage, BindlessImageCreateInfo,
-	BindlessImageUsage, Extent, Format, MutDescBufferExt, RCDesc,
+	BindlessImageUsage, Extent, Format, RCDesc,
 };
 use rust_gpu_bindless::pipeline::{
 	HasResourceContext, ImageAccessType, MutBufferAccessExt, MutImageAccessExt, TransferRead, TransferWrite,
 };
 use rust_gpu_bindless_shaders::descriptor::{Image, Image2d};
-use smallvec::SmallVec;
-use space_asset_disk::image::{
-	ArchivedImageStorage, DynImage, ImageDiskTrait, ImageType, RuntimeImageCompression, RuntimeImageMetadata,
-	SinglePixelMetadata,
-};
 use std::future::Future;
-
-pub struct UploadedImages {
-	images: Vec<RCDesc<Image<Image2d>>>,
-	pub default_white_texture: RCDesc<Image<Image2d>>,
-	pub default_normal_texture: RCDesc<Image<Image2d>>,
-}
 
 pub fn single_pixel_image(color: Vec4) -> image::RgbaImage {
 	image::RgbaImage::from_fn(1, 1, |_, _| Rgba(color.to_array().map(|c| (c * 255.) as u8)))
-}
-
-impl UploadedImages {
-	pub fn new<'a>(
-		bindless: &'a Bindless,
-		storage: impl Iterator<Item=image::RgbaImage> + 'a,
-	) -> impl Future<Output = anyhow::Result<Self>> + 'a {
-		let defaults = join_all(
-			[
-				(Vec4::splat(1.), "default_white_texture"),
-				(Vec4::splat(0.5), "default_normal_texture"),
-			]
-			.iter()
-			.map(|(color, name)| upload_image(bindless, &single_pixel_image(*color), name)),
-		);
-		let images = join_all(
-			storage
-				.images
-				.par_iter()
-				.map(|i| upload_image(bindless, &i.0.to_image(), &i.1))
-				.collect::<Vec<_>>(),
-		);
-		async {
-			let defaults = defaults.await;
-			Ok(Self {
-				images: images.await.into_iter().collect::<Result<Vec<_>, _>>()?,
-				default_white_texture: defaults[0].as_ref().unwrap().clone(),
-				default_normal_texture: defaults[1].as_ref().unwrap().clone(),
-			})
-		}
-	}
-
-	pub fn image<I: ImageDiskTrait>(&self, image: I) -> &RCDesc<Image<Image2d>> {
-		&self.images[image.id()]
-	}
-
-	pub fn archived_image<A, I: ImageDiskTrait>(&self, image: &A) -> &RCDesc<Image<Image2d>>
-	where
-		A: Deserialize<I, HighDeserializer<Panic>>,
-	{
-		self.image(rkyv::deserialize(image).unwrap())
-	}
 }
 
 pub fn upload_image<'a>(
@@ -80,17 +21,17 @@ pub fn upload_image<'a>(
 	name: &str,
 ) -> impl Future<Output = anyhow::Result<RCDesc<Image<Image2d>>>> + use<'a> {
 	let result: anyhow::Result<_> = (|| {
-		let extent = Extent::from(Vec2::from(image.dimensions()));
+		let extent = Extent::from(UVec2::from(image.dimensions()));
 
 		let staging_buffer = {
 			profiling::scope!("image upload to host buffer");
-			let upload_buffer = bindless.buffer().alloc_shared_from_iter(
+			let upload_buffer = bindless.buffer().alloc_from_iter(
 				&BindlessBufferCreateInfo {
 					usage: BindlessBufferUsage::MAP_WRITE | BindlessBufferUsage::TRANSFER_SRC,
 					name: &format!("staging buffer: {name}"),
 					allocation_scheme: BindlessAllocationScheme::AllocatorManaged,
 				},
-				image.as_raw().iter(),
+				image.as_raw().iter().copied(),
 			)?;
 			upload_buffer
 		};

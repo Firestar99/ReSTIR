@@ -6,20 +6,20 @@ use crate::material_shader;
 use glam::Vec4;
 use rust_gpu_bindless_macros::BufferStruct;
 use rust_gpu_bindless_shaders::descriptor::{Buffer, Descriptors, TransientDesc};
-use spirv_std::Sampler;
-use spirv_std::image::ImageWithMethods;
 use spirv_std::image::sample_with::grad;
+use spirv_std::image::ImageWithMethods;
+use spirv_std::Sampler;
 
 #[repr(C)]
 #[derive(Copy, Clone, Debug, BufferStruct)]
-pub struct MaterialParam<'a> {
+pub struct PbrMaterialParam<'a> {
 	pub sampler: TransientDesc<'a, Sampler>,
 	pub light_scene: TransientDesc<'a, Buffer<LightScene>>,
 }
 
-material_shader!(pbr_eval, MaterialParam<'static>, PbrModel, pbr_eval);
+material_shader!(pbr_eval, PbrMaterialParam<'static>, PbrModel, pbr_eval);
 
-fn pbr_eval(descriptors: &mut Descriptors<'_>, p: MaterialEvalParam<'_, MaterialParam, PbrModel>) -> Vec4 {
+fn pbr_eval(descriptors: &mut Descriptors<'_>, p: MaterialEvalParam<'_, PbrMaterialParam, PbrModel>) -> Vec4 {
 	let descriptors = &*descriptors;
 	let tri = p.tri;
 	let model = p.material.access(descriptors).load();

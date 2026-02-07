@@ -48,12 +48,16 @@ pub struct VisiPipelines {
 }
 
 impl VisiPipelines {
-	pub fn new(bindless: &Bindless, format: VisiPipelinesFormat) -> anyhow::Result<Arc<Self>> {
+	pub fn new(
+		bindless: &Bindless,
+		material_pass: MaterialPass,
+		format: VisiPipelinesFormat,
+	) -> anyhow::Result<Arc<Self>> {
 		Ok(Arc::new(Self {
 			bindless: bindless.clone(),
 			format,
 			raster_pipeline: VisiRasterPipeline::new(bindless, format)?,
-			material_pass: MaterialPass::new(bindless)?,
+			material_pass,
 		}))
 	}
 

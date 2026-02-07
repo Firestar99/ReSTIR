@@ -110,7 +110,8 @@ pub async fn main_loop(event_loop: EventLoopExecutor, events: Receiver<Event<()>
 	};
 
 	let model_cube = crate::model::parametized::cube(&bindless, Affine3A::default())?;
-	let model_lantern = crate::model::gltf::load_gltf(&bindless, Path::new(&model_lantern()), Affine3A::default())?;
+	let model_lantern =
+		crate::model::gltf::load_gltf(&bindless, Path::new(&model_lantern()), Affine3A::default()).await?;
 
 	let mut delta_timer = DeltaTimer::new();
 	let mut app_focus = AppFocus::new(event_loop.clone(), window);

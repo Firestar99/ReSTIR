@@ -37,6 +37,8 @@ gltf.workspace = true
 image.workspace = true
 base64.workspace = true
 urlencoding.workspace = true
+futures.workspace = true
+rayon.workspace = true
 
 [build-dependencies]
 anyhow.workspace = true
