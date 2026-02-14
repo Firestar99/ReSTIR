@@ -41,6 +41,11 @@ impl VisiPbrPipeline {
 			light_scene: Mutex::new(None),
 		}))
 	}
+
+	pub fn set_light_scene(&self, scene: RCDesc<Buffer<LightScene>>) {
+		let mut light_scene = self.light_scene.lock();
+		*light_scene = Some(scene);
+	}
 }
 
 impl MaterialEval for VisiPbrPipeline {

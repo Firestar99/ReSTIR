@@ -19,7 +19,7 @@ pub struct PointLight {
 assert_transfer_size!(PointLight, 6 * 4);
 
 #[repr(C)]
-#[derive(Copy, Clone, Debug, BufferStruct)]
+#[derive(Copy, Clone, Debug, Default, BufferStruct)]
 pub struct AmbientLight {
 	pub color: Radiance,
 }

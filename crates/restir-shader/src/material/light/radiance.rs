@@ -2,7 +2,7 @@ use core::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Sub, SubAssign};
 use glam::Vec3;
 use rust_gpu_bindless_macros::BufferStruct;
 
-#[derive(Copy, Clone, Debug, BufferStruct)]
+#[derive(Copy, Clone, Debug, Default, BufferStruct)]
 pub struct Radiance(pub Vec3);
 
 impl Radiance {

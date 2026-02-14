@@ -4,12 +4,17 @@ use crate::controls::fps_camera_controller::FpsCameraController;
 use crate::controls::fps_ui::FpsUi;
 use crate::controls::visi_debug_selector::VisiDebugSettings;
 use crate::debugger;
+use crate::material::light::LightSceneCpu;
+use crate::material::pass::MaterialPass;
+use crate::material::pbr::VisiPbrPipeline;
 use crate::model::VisiCpuModel;
 use crate::visibility::renderer::{VisiPipelines, VisiPipelinesFormat, VisiRenderInfo};
 use crate::visibility::scene::VisiCpuSceneAccum;
 use egui::{Context, Pos2};
 use glam::{Affine3A, UVec3, Vec3, Vec3Swizzles, Vec4};
 use restir_shader::camera::Camera;
+use restir_shader::material::light::analytical::{AmbientLight, DirectionalLight};
+use restir_shader::material::light::radiance::Radiance;
 use restir_shader::utils::affine_transform::AffineTransform;
 use restir_shader::visibility::scene::VisiInstanceInfo;
 use rust_gpu_bindless::descriptor::{BindlessImageUsage, BindlessInstance, DescriptorCounts, ImageDescExt};
@@ -25,6 +30,7 @@ use rust_gpu_bindless_winit::ash::{
 };
 use rust_gpu_bindless_winit::event_loop::{EventLoopExecutor, event_loop_init};
 use rust_gpu_bindless_winit::window_ref::WindowRef;
+use smallvec::SmallVec;
 use std::f32::consts::PI;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
@@ -95,8 +101,12 @@ pub async fn main_loop(event_loop: EventLoopExecutor, events: Receiver<Event<()>
 	.await?;
 	let swapchain_format = swapchain.params().format;
 
+	let mut material_pass = MaterialPass::new(&bindless)?;
+	let visi_pbr_pipeline = VisiPbrPipeline::new(&bindless)?;
+	material_pass.add_material(visi_pbr_pipeline.clone());
+
 	let visi_format = VisiPipelinesFormat::new(&bindless, swapchain_format);
-	let visi_pipelines = VisiPipelines::new(&bindless, visi_format)?;
+	let visi_pipelines = VisiPipelines::new(&bindless, material_pass, visi_format)?;
 	let mut visi_renderer = visi_pipelines.new_renderer();
 
 	let egui_renderer = EguiRenderer::new(bindless.clone());
@@ -144,6 +154,7 @@ pub async fn main_loop(event_loop: EventLoopExecutor, events: Receiver<Event<()>
 		};
 
 		let render_info;
+		let light_scene;
 		{
 			profiling::scope!("update");
 			let delta_time = delta_timer.next();
@@ -173,8 +184,20 @@ pub async fn main_loop(event_loop: EventLoopExecutor, events: Receiver<Event<()>
 			render_info = VisiRenderInfo {
 				scene,
 				debug_settings: visi_debug_settings.get(),
-			}
+			};
+
+			light_scene = LightSceneCpu {
+				ambient: AmbientLight {
+					color: Radiance(Vec3::splat(0.1)),
+				},
+				directional_lights: SmallVec::from_slice(&[DirectionalLight {
+					direction: Vec3::new(-1., 4., 2.).normalize(),
+					color: Radiance(Vec3::splat(20.)),
+				}]),
+				point_lights: Default::default(),
+			};
 		}
+		visi_pbr_pipeline.set_light_scene(light_scene.upload(&bindless)?);
 
 		let egui_output = {
 			profiling::scope!("update egui");
