@@ -6,22 +6,24 @@ use crate::visibility::scene::VisiScene;
 use glam::{UVec2, UVec3, UVec4, Vec3Swizzles};
 use rust_gpu_bindless_macros::BufferStruct;
 use rust_gpu_bindless_shaders::buffer_content::BufferStruct;
+use rust_gpu_bindless_shaders::descriptor::dyn_buffer::BufferType;
 use rust_gpu_bindless_shaders::descriptor::{Buffer, Descriptors, Image, Image2d, Image2dU, MutImage, TransientDesc};
 use static_assertions::const_assert_eq;
 
 #[repr(C)]
 #[derive(Copy, Clone, BufferStruct)]
-pub struct Param<'a, T: BufferStruct> {
+pub struct Param<'a, T: BufferStruct, M: BufferStruct> {
 	pub scene: TransientDesc<'a, Buffer<VisiScene>>,
+	pub buffer_type: BufferType<M>,
 	pub packed_vertex_image: TransientDesc<'a, Image<Image2dU>>,
 	pub depth_image: TransientDesc<'a, Image<Image2d>>,
 	pub output_image: TransientDesc<'a, MutImage<Image2d>>,
 	pub inner: T,
 }
 
-pub fn material_shader_image_eval<T: BufferStruct, F: MaterialEvalFn<T>>(
+pub fn material_shader_image_eval<T: BufferStruct, M: BufferStruct, F: MaterialEvalFn<T, M>>(
 	descriptors: &mut Descriptors<'_>,
-	param: &Param<'_, T>,
+	param: &Param<'_, T, M>,
 	wg_id: UVec3,
 	inv_id: UVec3,
 	eval: F,
@@ -34,9 +36,13 @@ pub fn material_shader_image_eval<T: BufferStruct, F: MaterialEvalFn<T>>(
 		let packed_geo: UVec4 = param.packed_vertex_image.access(&*descriptors).fetch_with_lod(pixel, 0);
 		let geo = PackedGeometryId::from_u32(packed_geo.x).unpack();
 		let tri = scene.load_triangle(&*descriptors, param.depth_image, pixel, geo);
-		let out_color = eval(&param.inner, &mut *descriptors, scene, tri);
-		unsafe {
-			param.output_image.access(&*descriptors).write(pixel, out_color);
+
+		if tri.model.dyn_material_model.can_upcast(param.buffer_type) {
+			let material_model = tri.model.dyn_material_model.upcast(param.buffer_type);
+			let out_color = eval(&param.inner, &mut *descriptors, scene, tri, material_model);
+			unsafe {
+				param.output_image.access(&*descriptors).write(pixel, out_color);
+			}
 		}
 	}
 }
@@ -47,11 +53,11 @@ const_assert_eq!(MATERIAL_IMAGE_WG_SIZE.x, 8);
 const_assert_eq!(MATERIAL_IMAGE_WG_SIZE.y, 8);
 #[macro_export]
 macro_rules! material_shader_image {
-	($name:ident, $param:ty, $eval:ident) => {
+	($name:ident, $param:ty, $model:ty, $eval:ident) => {
 		#[rust_gpu_bindless_macros::bindless(compute(threads(8, 8)))]
 		pub fn $name(
 			#[bindless(descriptors)] mut descriptors: rust_gpu_bindless_shaders::descriptor::Descriptors<'_>,
-			#[bindless(param)] param: &$crate::material::system::image_shader::Param<'static, $param>,
+			#[bindless(param)] param: &$crate::material::system::image_shader::Param<'static, $param, $model>,
 			#[spirv(workgroup_id)] wg_id: glam::UVec3,
 			#[spirv(local_invocation_id)] inv_id: glam::UVec3,
 		) {

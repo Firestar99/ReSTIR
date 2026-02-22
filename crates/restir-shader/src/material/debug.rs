@@ -5,7 +5,7 @@ use glam::{Vec3, Vec4};
 use num_enum::{FromPrimitive, IntoPrimitive};
 use rust_gpu_bindless_macros::BufferStruct;
 use rust_gpu_bindless_shaders::buffer_content::BufferStructPlain;
-use rust_gpu_bindless_shaders::descriptor::Descriptors;
+use rust_gpu_bindless_shaders::descriptor::{Buffer, Descriptors, StrongDesc};
 
 #[repr(u32)]
 #[derive(Copy, Clone, Debug, Default, Eq, PartialEq, Ord, PartialOrd, FromPrimitive, IntoPrimitive)]
@@ -53,9 +53,15 @@ impl Default for DebugSettings {
 	}
 }
 
-material_shader!(debug_material, DebugSettings, debug_eval);
+material_shader!(debug_material, DebugSettings, (), debug_eval);
 
-fn debug_eval(debug_settings: &DebugSettings, _: &mut Descriptors<'_>, _: VisiScene, tri: VisiTriangle) -> Vec4 {
+fn debug_eval(
+	debug_settings: &DebugSettings,
+	_: &mut Descriptors<'_>,
+	_: VisiScene,
+	tri: VisiTriangle,
+	_: StrongDesc<Buffer<()>>,
+) -> Vec4 {
 	let geo = tri.geo;
 	if geo.is_clear {
 		Vec4::ZERO

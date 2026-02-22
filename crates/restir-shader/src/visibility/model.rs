@@ -2,13 +2,19 @@ use crate::visibility::id::TriangleId;
 use core::ops::{Deref, DerefMut};
 use glam::Vec3;
 use rust_gpu_bindless_macros::BufferStruct;
-use rust_gpu_bindless_shaders::descriptor::{Buffer, Descriptors, StrongDesc};
+use rust_gpu_bindless_shaders::descriptor::dyn_buffer::DynBuffer;
+use rust_gpu_bindless_shaders::descriptor::{Buffer, Descriptors, Strong, StrongDesc};
 
 #[repr(C)]
 #[derive(Copy, Clone, Debug, BufferStruct)]
 pub struct VisiModel {
+	/// The triangles of this model
 	pub triangles: StrongDesc<Buffer<[VisiIndices]>>,
+	/// The vertices of this model
 	pub vertices: StrongDesc<Buffer<[VisiVertex]>>,
+	/// A reference to a buffer containing material information. The type contained within the buffer is unknown, and
+	/// the material evaluation shader is expected to transmute the type to the one it expects.
+	pub dyn_material_model: DynBuffer<Strong>,
 }
 
 #[repr(C)]

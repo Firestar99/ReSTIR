@@ -1,23 +1,26 @@
 use crate::visibility::scene::{VisiScene, VisiTriangle};
 use glam::Vec4;
-use rust_gpu_bindless_shaders::buffer_content::BufferStruct;
-use rust_gpu_bindless_shaders::descriptor::Descriptors;
+use rust_gpu_bindless_shaders::buffer_content::{BufferContent, BufferStruct};
+use rust_gpu_bindless_shaders::descriptor::{Buffer, Descriptors, StrongDesc};
 
 pub mod image_shader;
 
-pub trait MaterialEvalFn<T: BufferStruct>: FnOnce(&T, &mut Descriptors<'_>, VisiScene, VisiTriangle) -> Vec4 {}
+pub trait MaterialEvalFn<T: BufferStruct, M: BufferContent + ?Sized>:
+	FnOnce(&T, &mut Descriptors<'_>, VisiScene, VisiTriangle, StrongDesc<Buffer<M>>) -> Vec4
+{
+}
 
-impl<T: BufferStruct, I> MaterialEvalFn<T> for I where
-	I: FnOnce(&T, &mut Descriptors<'_>, VisiScene, VisiTriangle) -> Vec4
+impl<T: BufferStruct, M: BufferContent + ?Sized, I> MaterialEvalFn<T, M> for I where
+	I: FnOnce(&T, &mut Descriptors<'_>, VisiScene, VisiTriangle, StrongDesc<Buffer<M>>) -> Vec4
 {
 }
 
 #[macro_export]
 macro_rules! material_shader {
-	($name:ident, $param:ty, $eval:ident) => {
+	($name:ident, $param:ty, $model:ty, $eval:ident) => {
 		pub mod $name {
 			use super::*;
-			$crate::material_shader_image!(image, $param, $eval);
+			$crate::material_shader_image!(image, $param, $model, $eval);
 		}
 	};
 }
