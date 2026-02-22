@@ -8,12 +8,14 @@ use crate::model::VisiCpuModel;
 use crate::visibility::renderer::{VisiPipelines, VisiPipelinesFormat, VisiRenderInfo};
 use crate::visibility::scene::VisiCpuSceneAccum;
 use egui::{Context, Pos2};
-use glam::{Affine3A, UVec3, Vec3, Vec3Swizzles};
+use glam::{Affine3A, UVec3, Vec3, Vec3Swizzles, Vec4};
 use restir_shader::camera::Camera;
 use restir_shader::utils::affine_transform::AffineTransform;
 use restir_shader::visibility::scene::VisiInstanceInfo;
 use rust_gpu_bindless::descriptor::{BindlessImageUsage, BindlessInstance, DescriptorCounts, ImageDescExt};
-use rust_gpu_bindless::pipeline::{ColorAttachment, LoadOp, MutImageAccessExt, Present, StorageReadWrite};
+use rust_gpu_bindless::pipeline::{
+	ColorAttachment, LoadOp, MutImageAccessExt, Present, RenderingAttachmentImage, StorageReadWrite, TransferWrite,
+};
 use rust_gpu_bindless::platform::ash::Debuggers;
 use rust_gpu_bindless::platform::ash::{AshSingleGraphicsQueueCreateInfo, ash_init_single_graphics_queue};
 use rust_gpu_bindless_egui::renderer::{EguiRenderPipeline, EguiRenderer, EguiRenderingOptions};
@@ -79,7 +81,7 @@ pub async fn main_loop(event_loop: EventLoopExecutor, events: Receiver<Event<()>
 			AshSwapchainParams::automatic_best(
 				&bindless2,
 				surface,
-				BindlessImageUsage::STORAGE | BindlessImageUsage::COLOR_ATTACHMENT,
+				BindlessImageUsage::STORAGE | BindlessImageUsage::TRANSFER_DST | BindlessImageUsage::COLOR_ATTACHMENT,
 				SwapchainImageFormatPreference::UNORM,
 			)
 		})
@@ -186,8 +188,13 @@ pub async fn main_loop(event_loop: EventLoopExecutor, events: Receiver<Event<()>
 		let swapchain_image = {
 			profiling::scope!("render");
 			bindless.execute(|mut cmd| {
-				let output_image = swapchain_image.access_dont_care::<StorageReadWrite>(&cmd)?;
-				visi_renderer.render(&mut cmd, &output_image, render_info).unwrap();
+				let mut output_image = swapchain_image.access_dont_care::<TransferWrite>(&cmd)?;
+				cmd.clear_image(RenderingAttachmentImage::ColorF {
+					image: &mut output_image,
+					clear_value: Vec4::ZERO,
+				})?;
+				let mut output_image = output_image.transition::<StorageReadWrite>()?;
+				visi_renderer.render(&mut cmd, &mut output_image, render_info).unwrap();
 				let mut output_image = output_image.transition::<ColorAttachment>()?;
 				egui_output
 					.draw(

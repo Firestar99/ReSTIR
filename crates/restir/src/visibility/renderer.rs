@@ -121,7 +121,7 @@ impl VisiRenderer {
 	pub fn render(
 		&mut self,
 		cmd: &mut Recording<'_>,
-		output_image: &MutImageAccess<'_, Image2d, StorageReadWrite>,
+		output_image: &mut MutImageAccess<'_, Image2d, StorageReadWrite>,
 		info: VisiRenderInfo,
 	) -> anyhow::Result<()> {
 		self.image_supported(output_image)?;
