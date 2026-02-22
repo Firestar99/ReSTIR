@@ -1,4 +1,4 @@
-use crate::descriptor::{Bindless, BindlessBufferUsage, Extent, Format, ImageSlot};
+use crate::descriptor::{Bindless, BindlessBufferUsage, BindlessImageUsage, Extent, Format, ImageSlot};
 use crate::pipeline::access_image::MutImageAccess;
 use crate::pipeline::access_type::{
 	ColorAttachment, DepthStencilAttachment, ImageAccessType, IndexReadable, IndirectCommandReadable,
@@ -8,6 +8,7 @@ use crate::pipeline::mesh_graphics_pipeline::BindlessMeshGraphicsPipeline;
 use crate::pipeline::mut_or_shared::MutOrSharedBuffer;
 use crate::pipeline::recording::{HasResourceContext, Recording, RecordingError};
 use crate::pipeline::rendering::RenderingError::MismatchedColorAttachmentCount;
+use crate::pipeline::{AccessError, MutOrSharedImage};
 use crate::platform::ash::Ash;
 use crate::platform::{BindlessPipelinePlatform, RenderingContext};
 use glam::{IVec2, UVec2};
@@ -81,6 +82,15 @@ impl<'a, 'b, P: BindlessPipelinePlatform, A: ImageAccessType> RenderingAttachmen
 				RenderingAttachmentImage::ColorI { image, .. } => image.inner_slot(),
 				RenderingAttachmentImage::DepthStencil { image, .. } => image.inner_slot(),
 			}
+		}
+	}
+
+	pub fn has_required_usage(&self, required: BindlessImageUsage) -> Result<(), AccessError> {
+		match self {
+			RenderingAttachmentImage::ColorF { image, .. } => image.has_required_usage(required),
+			RenderingAttachmentImage::ColorU { image, .. } => image.has_required_usage(required),
+			RenderingAttachmentImage::ColorI { image, .. } => image.has_required_usage(required),
+			RenderingAttachmentImage::DepthStencil { image, .. } => image.has_required_usage(required),
 		}
 	}
 }

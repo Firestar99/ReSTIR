@@ -1,4 +1,5 @@
 use crate::descriptor::{Bindless, BindlessBufferUsage, BindlessImageUsage};
+use crate::pipeline::RenderingAttachmentImage;
 use crate::pipeline::access_buffer::MutBufferAccess;
 use crate::pipeline::access_error::AccessError;
 use crate::pipeline::access_image::MutImageAccess;
@@ -163,6 +164,19 @@ impl<'a, P: BindlessPipelinePlatform> Recording<'a, P> {
 		unsafe {
 			self.platform
 				.copy_image_to_buffer(src_image, dst_buffer)
+				.map_err(Into::<RecordingError<P>>::into)
+		}
+	}
+
+	/// Clear an image
+	pub fn clear_image<A: ImageAccessType + TransferWriteable>(
+		&mut self,
+		image: RenderingAttachmentImage<'_, '_, P, A>,
+	) -> Result<(), RecordingError<P>> {
+		image.has_required_usage(BindlessImageUsage::TRANSFER_DST)?;
+		unsafe {
+			self.platform
+				.clear_image(image)
 				.map_err(Into::<RecordingError<P>>::into)
 		}
 	}

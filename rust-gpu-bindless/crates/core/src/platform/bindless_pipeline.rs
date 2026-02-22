@@ -4,7 +4,8 @@ use crate::pipeline::{
 	ColorAttachment, DepthStencilAttachment, DrawIndexedIndirectCommand, DrawIndirectCommand,
 	GraphicsPipelineCreateInfo, HasResourceContext, ImageAccess, ImageAccessType, IndexReadable, IndexTypeTrait,
 	IndirectCommandReadable, MeshGraphicsPipelineCreateInfo, MutBufferAccess, MutImageAccess, MutOrSharedBuffer,
-	Recording, RecordingError, RenderPassFormat, RenderingAttachment, TransferReadable, TransferWriteable,
+	Recording, RecordingError, RenderPassFormat, RenderingAttachment, RenderingAttachmentImage, TransferReadable,
+	TransferWriteable,
 };
 use crate::platform::BindlessPlatform;
 use glam::UVec2;
@@ -107,6 +108,12 @@ pub unsafe trait RecordingContext<'a, P: BindlessPipelinePlatform>: HasResourceC
 		&mut self,
 		src: &MutImageAccess<P, IT, IA>,
 		dst: &MutBufferAccess<P, BT, BA>,
+	) -> Result<(), P::RecordingError>;
+
+	/// Clear an image
+	unsafe fn clear_image<A: ImageAccessType + TransferWriteable>(
+		&mut self,
+		image: RenderingAttachmentImage<'_, '_, P, A>,
 	) -> Result<(), P::RecordingError>;
 
 	/// Dispatch a bindless compute shader

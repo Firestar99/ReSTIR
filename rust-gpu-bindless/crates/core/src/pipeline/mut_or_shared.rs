@@ -72,14 +72,14 @@ pub unsafe trait MutOrSharedImage<P: BindlessPlatform, T: ImageType, A> {
 	}
 }
 
-unsafe impl<P: BindlessPlatform, T: ImageType> MutOrSharedImage<P, T, GeneralRead> for &RCDesc<P, Image<T>> {
+unsafe impl<P: BindlessPlatform, T: ImageType> MutOrSharedImage<P, T, GeneralRead> for RCDesc<P, Image<T>> {
 	unsafe fn inner_slot(&self) -> &ImageSlot<P> {
-		RCDescExt::inner_slot(*self)
+		RCDescExt::inner_slot(self)
 	}
 }
 
 unsafe impl<P: BindlessPipelinePlatform, T: ImageType, A: ImageAccessType> MutOrSharedImage<P, T, A>
-	for &MutImageAccess<'_, P, T, A>
+	for MutImageAccess<'_, P, T, A>
 {
 	unsafe fn inner_slot(&self) -> &ImageSlot<P> {
 		unsafe { MutImageAccess::inner_slot(self) }

@@ -5,16 +5,17 @@ use crate::descriptor::{
 use crate::pipeline::{
 	BindlessComputePipeline, BufferAccess, BufferAccessType, HasResourceContext, ImageAccess, ImageAccessType,
 	IndirectCommandReadable, MutBufferAccess, MutImageAccess, MutOrSharedBuffer, Recording, RecordingError,
-	TransferReadable, TransferWriteable,
+	RenderingAttachmentImage, TransferReadable, TransferWriteable,
 };
 use crate::platform::ash::image_format::FormatExt;
 use crate::platform::ash::{Ash, AshExecution, AshPendingExecution};
 use crate::platform::{BindlessPipelinePlatform, RecordingContext, RecordingResourceContext};
 use ash::vk::{
 	BufferCopy, BufferImageCopy2, BufferMemoryBarrier2, CommandBuffer, CommandBufferBeginInfo, CommandBufferUsageFlags,
-	CopyBufferToImageInfo2, CopyImageToBufferInfo2, DependencyInfo, Fence, ImageMemoryBarrier2, ImageSubresourceLayers,
-	ImageSubresourceRange, MemoryBarrier2, Offset3D, PipelineBindPoint, PipelineStageFlags, QUEUE_FAMILY_IGNORED,
-	REMAINING_ARRAY_LAYERS, REMAINING_MIP_LEVELS, SubmitInfo, TimelineSemaphoreSubmitInfo, WHOLE_SIZE,
+	CopyBufferToImageInfo2, CopyImageToBufferInfo2, DependencyInfo, Fence, ImageAspectFlags, ImageMemoryBarrier2,
+	ImageSubresourceLayers, ImageSubresourceRange, MemoryBarrier2, Offset3D, PipelineBindPoint, PipelineStageFlags,
+	QUEUE_FAMILY_IGNORED, REMAINING_ARRAY_LAYERS, REMAINING_MIP_LEVELS, SubmitInfo, TimelineSemaphoreSubmitInfo,
+	WHOLE_SIZE,
 };
 use rust_gpu_bindless_shaders::buffer_content::{BufferContent, BufferStruct};
 use rust_gpu_bindless_shaders::descriptor::{BindlessPushConstant, ImageType, TransientAccess};
@@ -501,6 +502,49 @@ unsafe impl<'a> RecordingContext<'a, Ash> for AshRecordingContext<'a> {
 						..Default::default()
 					}]),
 			);
+			Ok(())
+		}
+	}
+
+	unsafe fn clear_image<A: ImageAccessType + TransferWriteable>(
+		&mut self,
+		image: RenderingAttachmentImage<'_, '_, Ash, A>,
+	) -> Result<(), <Ash as BindlessPipelinePlatform>::RecordingError> {
+		unsafe {
+			self.ash_flush();
+			let device = &self.bindless.platform.device;
+			match image {
+				RenderingAttachmentImage::DepthStencil { .. } => {
+					device.cmd_clear_depth_stencil_image(
+						self.cmd,
+						image.inner_slot().image,
+						A::IMAGE_ACCESS.to_ash_image_access().image_layout,
+						&image.to_ash_clear_color().depth_stencil,
+						&[ImageSubresourceRange {
+							aspect_mask: ImageAspectFlags::DEPTH | ImageAspectFlags::STENCIL,
+							base_mip_level: 0,
+							level_count: 1,
+							base_array_layer: 0,
+							layer_count: 1,
+						}],
+					);
+				}
+				_ => {
+					device.cmd_clear_color_image(
+						self.cmd,
+						image.inner_slot().image,
+						A::IMAGE_ACCESS.to_ash_image_access().image_layout,
+						&image.to_ash_clear_color().color,
+						&[ImageSubresourceRange {
+							aspect_mask: ImageAspectFlags::COLOR,
+							base_mip_level: 0,
+							level_count: 1,
+							base_array_layer: 0,
+							layer_count: 1,
+						}],
+					);
+				}
+			}
 			Ok(())
 		}
 	}
